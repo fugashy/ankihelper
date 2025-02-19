@@ -1,18 +1,19 @@
-import click
 import os
 import re
 import subprocess
 import genanki
-from yt_dlp import YoutubeDL
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import click
+from tqdm import tqdm
+from yt_dlp import YoutubeDL
+
 
 def convert_vtt_time(vtt_time, offset=0):
     """VTTの時間フォーマット (hh:mm:ss.sss) を ffmpeg 用 (hh:mm:ss) に変換し、offset(秒)を加える"""
     dt = datetime.strptime(vtt_time.replace(',', '.'), "%H:%M:%S.%f")
     dt += timedelta(seconds=offset)
-    return dt.strftime("%H:%M:%S")
-
+    return dt.strftime("%H:%M:%S.%f")
 
 
 @click.command()
@@ -109,7 +110,7 @@ def main(
         futures = []
         for idx, (start, end, text) in enumerate(matches):
             futures.append(executor.submit(process_section, idx, start, end, text))
-        for future in as_completed(futures):
+        for future in tqdm(as_completed(futures), total=len(futures)):
             try:
                 result = future.result()
                 cards.append(result)
@@ -159,6 +160,7 @@ def main(
     print("🎉 Ankiデッキ作成完了！")
     print(f"📦 出力ファイル: {output_apkg}")
 
+    subprocess.run(["reset"])
 
 if __name__ == "__main__":
     exit(main())
