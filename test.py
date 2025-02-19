@@ -16,12 +16,22 @@ def convert_vtt_time(vtt_time, offset=0):
     return dt.strftime("%H:%M:%S.%f")
 
 
-@click.command()
+@click.group()
+def ankihelper():
+    pass
+
+
+@ankihelper.group()
+def deck():
+    pass
+
+
+@deck.command()
 @click.argument("url", type=str)
 @click.option("-aos", "--audio-offset-sec_start", type=float, default=0.)
 @click.option("-aoe", "--audio-offset-sec_end", type=float, default=0.)
 @click.option("-ios", "--image-offset-sec-start", type=float, default=0.)
-def main(
+def from_web_video(
         url,
         audio_offset_sec_start,
         audio_offset_sec_end,
@@ -163,4 +173,4 @@ def main(
     subprocess.run(["reset"])
 
 if __name__ == "__main__":
-    exit(main())
+    exit(ankihelper())
