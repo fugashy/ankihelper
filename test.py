@@ -40,6 +40,91 @@ def deck():
 
 
 @deck.command()
+@click.argument("audio_filepath", type=str)
+@click.argument("vtt_filepath", type=str)
+@click.option("-aos", "--audio-offset-sec_start", type=float, default=0.)
+@click.option("-aoe", "--audio-offset-sec_end", type=float, default=0.)
+def from_audio_and_vtt(audio_filepath, vtt_filepath, audio_offset_sec_start, audio_offset_sec_end):
+    audio_name = audio_filepath.split("/")[-1].split(".")[0]
+    work_dir = f"/tmp/{audio_name}"
+    AUDIO_FILE = audio_filepath
+    SUBTITLE_FILE = vtt_filepath
+    AUDIO_CLIPS_DIR = os.path.join(work_dir, "audio_clips")
+    os.makedirs(AUDIO_CLIPS_DIR, exist_ok=True)
+
+    matches = _parse_vtt(vtt_filepath)
+
+    def process_section(idx, start, end, text, audio_offset=0, image_offset=0):
+        text = text.strip()
+        output_audio = os.path.join(AUDIO_CLIPS_DIR, f"audio-{idx}.mp3")
+
+        start_audio = convert_vtt_time(start, offset=audio_offset_sec_start)
+        end_audio   = convert_vtt_time(end, offset=audio_offset_sec_end)
+
+        subprocess.run([
+            "ffmpeg", "-i", AUDIO_FILE,
+            "-ss", start_audio, "-to", end_audio,
+            "-q:a", "0", "-map", "a", "-f", "mp3", output_audio, "-y"
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        return idx, (os.path.basename(output_audio), text)
+
+    cards = []
+    print("⚙️ 音声クリップとスクリーンショットを生成中...")
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+        for idx, (start, end, text) in enumerate(matches):
+            futures.append(executor.submit(process_section, idx, start, end, text))
+        for future in tqdm(as_completed(futures), total=len(futures)):
+            try:
+                result = future.result()
+                cards.append(result)
+            except Exception as e:
+                print("Error processing a section:", e)
+
+    print(f"✅ {len(cards)} 個のセクションを処理しました！")
+
+    print("📚 Ankiデッキを作成中...")
+    model = genanki.Model(
+        1234567890,
+        "Simple Listening Model",
+        fields=[
+            {"name": "Audio"},
+            {"name": "Text"},
+            ],
+        templates=[
+            {
+                "name": "Listening Card",
+                "qfmt": '<audio controls><source src="{{Audio}}" type="audio/mpeg"></audio><br>'
+                        'What did they say?',
+                "afmt": '{{FrontSide}}<hr>{{Text}}'
+            }
+        ]
+    )
+
+    deck = genanki.Deck(987654321, audio_name)
+    for _, (audio, text) in sorted(cards):
+        note = genanki.Note(
+            model=model,
+            fields=[audio.replace(audio, f"[sound:{audio}]"), text]
+        )
+        deck.add_note(note)
+
+    output_apkg = os.path.join(work_dir, f"{audio_name}.apkg")
+    package = genanki.Package(
+        deck,
+        media_files=
+            [os.path.join(AUDIO_CLIPS_DIR, f) for f in os.listdir(AUDIO_CLIPS_DIR)]
+    )
+    package.write_to_file(output_apkg)
+
+    print("🎉 Ankiデッキ作成完了！")
+    print(f"📦 出力ファイル: {output_apkg}")
+
+    subprocess.run(["reset"])
+
+
+@deck.command()
 @click.argument("url", type=str)
 @click.option("-aos", "--audio-offset-sec_start", type=float, default=0.)
 @click.option("-aoe", "--audio-offset-sec_end", type=float, default=0.)
@@ -176,6 +261,44 @@ def from_web_video(
     print(f"📦 出力ファイル: {output_apkg}")
 
     subprocess.run(["reset"])
+
+
+@ankihelper.group()
+@click.argument("audio_filepath", type=str)
+@click.pass_context
+def audio(ctx, audio_filepath):
+    ctx.ensure_object(dict)
+    ctx.obj["audio_filepath"] = audio_filepath
+
+
+@audio.command()
+@click.option("--output_filepath", type=str, default="/tmp/script.vtt")
+@click.pass_context
+def to_script(ctx, output_filepath):
+    model = whisper.load_model("small")
+
+    result = model.transcribe(ctx.obj["audio_filepath"])
+
+    with open(output_filepath, "w", encoding="utf-8") as vtt_file:
+        vtt_file.write("WEBVTT\n\n")  # VTTのヘッダー
+
+        for segment in result["segments"]:
+            start = segment["start"]
+            end = segment["end"]
+            text = segment["text"]
+
+            # 時間を VTT フォーマット (hh:mm:ss.sss) に変換
+            def format_timestamp(seconds):
+                hours = int(seconds // 3600)
+                minutes = int((seconds % 3600) // 60)
+                secs = seconds % 60
+                return f"{hours:02}:{minutes:02}:{secs:06.3f}".replace('.', ',')
+
+            vtt_file.write(f"{format_timestamp(start)} --> {format_timestamp(end)}\n")
+            vtt_file.write(f"{text}\n\n")
+
+    print(f"VTTファイルが作成されました: {output_filepath}")
+
 
 if __name__ == "__main__":
     exit(ankihelper())
