@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import click
 from tqdm import tqdm
 from yt_dlp import YoutubeDL
+import whisper
 
 
 def convert_vtt_time(vtt_time, offset=0):
@@ -14,6 +15,18 @@ def convert_vtt_time(vtt_time, offset=0):
     dt = datetime.strptime(vtt_time.replace(',', '.'), "%H:%M:%S.%f")
     dt += timedelta(seconds=offset)
     return dt.strftime("%H:%M:%S.%f")
+
+
+def _parse_vtt(vtt_filepath):
+    print("🔍 VTT字幕を解析中...")
+    with open(vtt_filepath, "r", encoding="utf-8") as f:
+        vtt_content = f.read()
+
+    pattern = re.compile(
+        r"(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*\n([\s\S]*?)(?=\n\d{2}:\d{2}:\d{2}|\Z)",
+        re.MULTILINE
+    )
+    return pattern.findall(vtt_content)
 
 
 @click.group()
@@ -84,15 +97,7 @@ def from_web_video(
     print(f"🔹 音声: {'OK' if os.path.exists(AUDIO_FILE) else '❌'}")
     print(f"🔹 字幕: {'OK' if os.path.exists(SUBTITLE_FILE) else '❌'}")
 
-    print("🔍 VTT字幕を解析中...")
-    with open(SUBTITLE_FILE, "r", encoding="utf-8") as f:
-        vtt_content = f.read()
-
-    pattern = re.compile(
-        r"(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*\n([\s\S]*?)(?=\n\d{2}:\d{2}:\d{2}|\Z)",
-        re.MULTILINE
-    )
-    matches = pattern.findall(vtt_content)
+    matches = _parse_vtt(SUBTITLE_FILE)
 
     def process_section(idx, start, end, text, audio_offset=0, image_offset=0):
         """各セクションについて音声クリップとスクリーンショットを生成する"""
