@@ -8,6 +8,7 @@ import click
 from tqdm import tqdm
 from yt_dlp import YoutubeDL
 import whisper
+import torch
 
 
 def convert_vtt_time(vtt_time, offset=0):
@@ -42,8 +43,8 @@ def deck():
 @deck.command()
 @click.argument("audio_filepath", type=str)
 @click.argument("vtt_filepath", type=str)
-@click.option("-aos", "--audio-offset-sec_start", type=float, default=0.)
-@click.option("-aoe", "--audio-offset-sec_end", type=float, default=0.)
+@click.option("-aos", "--audio-offset-sec_start", type=float, default=-0.3)
+@click.option("-aoe", "--audio-offset-sec_end", type=float, default=1.0)
 def from_audio_and_vtt(audio_filepath, vtt_filepath, audio_offset_sec_start, audio_offset_sec_end):
     audio_name = audio_filepath.split("/")[-1].split(".")[0]
     work_dir = f"/tmp/{audio_name}"
@@ -70,7 +71,7 @@ def from_audio_and_vtt(audio_filepath, vtt_filepath, audio_offset_sec_start, aud
         return idx, (os.path.basename(output_audio), text)
 
     cards = []
-    print("⚙️ 音声クリップとスクリーンショットを生成中...")
+    print("⚙️ 音声クリップを生成中...")
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = []
         for idx, (start, end, text) in enumerate(matches):
@@ -275,9 +276,14 @@ def audio(ctx, audio_filepath):
 @click.option("--output_filepath", type=str, default="/tmp/script.vtt")
 @click.pass_context
 def to_script(ctx, output_filepath):
-    model = whisper.load_model("small")
-
-    result = model.transcribe(ctx.obj["audio_filepath"])
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    try:
+        model = whisper.load_model("small", device="cpu").to(device)
+    except NotImplementedError:
+        model = whisper.load_model("small", device="cpu")
+    result = model.transcribe(
+            ctx.obj["audio_filepath"],
+            word_timestamps=True)
 
     with open(output_filepath, "w", encoding="utf-8") as vtt_file:
         vtt_file.write("WEBVTT\n\n")  # VTTのヘッダー
