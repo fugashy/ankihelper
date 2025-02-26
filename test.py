@@ -11,6 +11,7 @@ import whisper
 import torch
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
+import pandas as pd
 
 
 def convert_vtt_time(vtt_time, offset=0):
@@ -40,6 +41,56 @@ def ankihelper():
 @ankihelper.group()
 def deck():
     pass
+
+
+@deck.command()
+@click.argument("input_filepaths", type=str, nargs=-1)
+@click.option("--output_filepath", type=str, default="/tmp/table.apkg")
+def from_table(input_filepaths, output_filepath):
+    dfs = [
+            pd.read_csv(
+                input_filepath, header=0, names=["jp", "jp_raw", "en", "jp_audio", "en_audio"])
+            for input_filepath in input_filepaths]
+
+    model = genanki.Model(
+        1234567890,
+        "JumpStart Model",
+        fields=[
+            {"name": "JP"},
+            {"name": "JP_RAW"},
+            {"name": "EN"},
+            {"name": "Audio"},
+            ],
+        templates=[
+            {
+                "name": "Listening Card",
+                "qfmt": '{{JP}}<br>{{JP_RAW}}',
+                "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}'
+            }
+        ]
+    )
+
+    deck = genanki.Deck(987654321, os.path.basename(output_filepath))
+    audio_filepaths = list()
+    for df in dfs:
+        for row in df.itertuples():
+            audio_filename = os.path.basename(row.en_audio)
+            audio_filepaths.append(row.en_audio)
+            note = genanki.Note(
+                model=model,
+                fields=[
+                    row.jp,
+                    row.jp_raw,
+                    row.en,
+                    audio_filename.replace(audio_filename, f"[sound:{audio_filename}]")]
+            )
+            deck.add_note(note)
+
+    package = genanki.Package(
+        deck,
+        media_files=audio_filepaths,
+    )
+    package.write_to_file(f"{output_filepath}")
 
 
 @deck.command()
