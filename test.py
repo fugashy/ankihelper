@@ -9,6 +9,8 @@ from tqdm import tqdm
 from yt_dlp import YoutubeDL
 import whisper
 import torch
+from pydub import AudioSegment
+from pydub.silence import detect_nonsilent
 
 
 def convert_vtt_time(vtt_time, offset=0):
@@ -43,8 +45,8 @@ def deck():
 @deck.command()
 @click.argument("audio_filepath", type=str)
 @click.argument("vtt_filepath", type=str)
-@click.option("-aos", "--audio-offset-sec_start", type=float, default=-0.3)
-@click.option("-aoe", "--audio-offset-sec_end", type=float, default=1.0)
+@click.option("-aos", "--audio-offset-sec_start", type=float, default=0.)
+@click.option("-aoe", "--audio-offset-sec_end", type=float, default=0.)
 def from_audio_and_vtt(audio_filepath, vtt_filepath, audio_offset_sec_start, audio_offset_sec_end):
     audio_name = audio_filepath.split("/")[-1].split(".")[0]
     work_dir = f"/tmp/{audio_name}"
@@ -270,6 +272,27 @@ def from_web_video(
 def audio(ctx, audio_filepath):
     ctx.ensure_object(dict)
     ctx.obj["audio_filepath"] = audio_filepath
+
+
+@audio.command()
+@click.option("--output_dir", type=str, default="/tmp/cliped")
+@click.option("--min_silence_len", type=int, default=500)
+@click.option("--silence_thresh", type=int, default=-40)
+@click.pass_context
+def clip_per_silence(ctx, output_dir, min_silence_len, silence_thresh):
+    os.makedirs(output_dir, exist_ok=True)
+    input_filename = ctx.obj["audio_filepath"].split("/")[-1].split(".")[0]
+    audio = AudioSegment.from_file(ctx.obj["audio_filepath"])
+    # 無音でない区間を取得（開始時間, 終了時間 のリスト）
+    nonsilent_chunks = detect_nonsilent(
+            audio,
+            min_silence_len=min_silence_len,
+            silence_thresh=silence_thresh)
+
+    for i, (start, end) in enumerate(nonsilent_chunks):
+        chunk = audio[start:end]
+        chunk.export(f"{output_dir}/{input_filename}_{i}.mp3", format="mp3")
+        print(f"Saved: {input_filename}_{i}.wav ({start}ms - {end}ms)")
 
 
 @audio.command()
