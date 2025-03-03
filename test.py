@@ -12,6 +12,7 @@ import torch
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 import pandas as pd
+from gtts import gTTS
 
 
 def convert_vtt_time(vtt_time, offset=0):
@@ -39,6 +40,35 @@ def ankihelper():
 
 
 @ankihelper.group()
+def table():
+    pass
+
+
+@table.command()
+@click.argument("input_table_filepath", type=str)
+@click.option("--output_audio_dirpath", type=str, default="/tmp/audio")
+@click.option("--output_table_filepath", type=str, default="/tmp/table-with-audio.csv")
+def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath):
+    df = pd.read_csv(input_table_filepath)
+    english_texts = df["en"]
+
+    os.makedirs(output_audio_dirpath, exist_ok=True)
+
+    audio_paths = []
+    for i, text in enumerate(english_texts):
+        audio_filename = f"audio_{i+1}.mp3"
+        audio_path = os.path.join(output_audio_dirpath, audio_filename)
+
+        tts = gTTS(text, lang='en')
+        tts.save(audio_path)
+
+        audio_paths.append(audio_path)
+
+    df['en_audio'] = audio_paths
+    df.to_csv(output_table_filepath, index=False)
+
+
+@ankihelper.group()
 def deck():
     pass
 
@@ -46,31 +76,40 @@ def deck():
 @deck.command()
 @click.argument("input_filepaths", type=str, nargs=-1)
 @click.option("--output_filepath", type=str, default="/tmp/table.apkg")
-def from_table(input_filepaths, output_filepath):
+@click.option("--en_major", is_flag=True, default=False)
+def from_table(input_filepaths, output_filepath, en_major):
+    name = os.path.basename(output_filepath)
     dfs = [
             pd.read_csv(
-                input_filepath, header=0, names=["jp", "jp_raw", "en", "jp_audio", "en_audio"])
+                input_filepath, header=0, names=["en", "jp", "en_audio"])
             for input_filepath in input_filepaths]
+
+
+    if en_major:
+        template = {
+                "name": "Listening Card",
+                "qfmt": '{{Audio}}<br>{{EN}}',
+                "afmt": '{{FrontSide}}<hr>{{JP}}'
+            }
+    else:
+        template = {
+                "name": "Listening Card",
+                "qfmt": '{{JP}}',
+                "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}'
+            }
 
     model = genanki.Model(
         1234567890,
-        "JumpStart Model",
+        f"{name} Model",
         fields=[
             {"name": "JP"},
-            {"name": "JP_RAW"},
             {"name": "EN"},
             {"name": "Audio"},
             ],
-        templates=[
-            {
-                "name": "Listening Card",
-                "qfmt": '{{JP}}<br>{{JP_RAW}}',
-                "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}'
-            }
-        ]
+        templates=[template]
     )
 
-    deck = genanki.Deck(987654321, os.path.basename(output_filepath))
+    deck = genanki.Deck(987654321, name)
     audio_filepaths = list()
     for df in dfs:
         for row in df.itertuples():
@@ -80,7 +119,6 @@ def from_table(input_filepaths, output_filepath):
                 model=model,
                 fields=[
                     row.jp,
-                    row.jp_raw,
                     row.en,
                     audio_filename.replace(audio_filename, f"[sound:{audio_filename}]")]
             )
