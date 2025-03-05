@@ -1,4 +1,5 @@
 import os
+import shutil
 import re
 import subprocess
 import genanki
@@ -52,6 +53,7 @@ def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath)
     df = pd.read_csv(input_table_filepath)
     english_texts = df["en"]
 
+    shutil.rmtree(output_audio_dirpath)
     os.makedirs(output_audio_dirpath, exist_ok=True)
 
     audio_paths = []
@@ -81,9 +83,8 @@ def from_table(input_filepaths, output_filepath, en_major):
     name = os.path.basename(output_filepath)
     dfs = [
             pd.read_csv(
-                input_filepath, header=0, names=["en", "jp", "en_audio"])
+                input_filepath, header=0, usecols=["en", "jp", "en_audio"])
             for input_filepath in input_filepaths]
-
 
     if en_major:
         template = {
