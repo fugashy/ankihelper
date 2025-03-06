@@ -14,6 +14,15 @@ from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 import pandas as pd
 from gtts import gTTS
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sentence_transformers import SentenceTransformer
+from scipy.cluster.hierarchy import linkage, fcluster
+import json
+
+
 
 
 def convert_vtt_time(vtt_time, offset=0):
@@ -68,6 +77,54 @@ def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath)
 
     df['en_audio'] = audio_paths
     df.to_csv(output_table_filepath, index=False)
+
+
+@table.command()
+@click.argument("input_filepaths", type=str, nargs=-1)
+@click.option("--output_table_filepath_csv", type=str, default="/tmp/table-with-category.csv")
+@click.option("--output_table_filepath_json", type=str, default="/tmp/table-with-category.json")
+@click.option("--en-key", type=str, default="en")
+def add_categories(input_filepaths, output_table_filepath_csv, output_table_filepath_json, en_key):
+    dfs = [pd.read_csv(input_filepath, header=0) for input_filepath in input_filepaths]
+    df = pd.concat(dfs)
+
+    model = SentenceTransformer("all-MiniLM-L6-v2")  # 軽量なSentence-BERTモデルを使用
+    embeddings = model.encode(df[en_key].tolist(), convert_to_tensor=True)
+    embeddings_np = embeddings.cpu().numpy()
+
+    wss = []
+    max_k = 15
+    for k in range(1, max_k):
+        kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+        kmeans.fit(embeddings_np)
+        wss.append(kmeans.inertia_)
+
+    plt.plot(range(1, max_k), wss, marker="o")
+    plt.xlabel("Number of Clusters")
+    plt.ylabel("WSS (Within-Cluster Sum of Squares)")
+    plt.title("Elbow Method for Optimal k")
+    plt.show()
+
+    optimal_k = int(input("Enter the optimal number of clusters: "))
+
+    kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
+    df["Cluster"] = kmeans.fit_predict(embeddings_np)
+
+    tree = {"name": "English Sentences", "children": []}
+    clusters = {}
+
+    for _, row in df.iterrows():
+        cluster_name = f"Cluster {row['Cluster']}"
+        if cluster_name not in clusters:
+            clusters[cluster_name] = {"name": cluster_name, "children": []}
+        clusters[cluster_name]["children"].append({"name": row[en_key]})
+
+    tree["children"] = list(clusters.values())
+
+    with open(output_table_filepath_json, "w") as f:
+        json.dump(tree, f, indent=2)
+
+    df.to_csv(output_table_filepath_csv, index=False)
 
 
 @ankihelper.group()
