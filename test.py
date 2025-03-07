@@ -21,6 +21,7 @@ from sklearn.metrics import silhouette_score
 from sentence_transformers import SentenceTransformer
 from scipy.cluster.hierarchy import linkage, fcluster
 import json
+from googletrans import Translator
 
 
 
@@ -52,6 +53,18 @@ def ankihelper():
 @ankihelper.group()
 def table():
     pass
+
+
+@table.command()
+@click.argument("input_table_filepath", type=str)
+@click.option("--output_table_filepath", type=str, default="/tmp/table-with-trans.csv")
+def add_trans(input_table_filepath, output_table_filepath):
+    df = pd.read_csv(input_table_filepath, header=0)
+
+    translator = Translator()
+    df["jp"] = df["en"].apply(
+            lambda x: translator.translate(x, src="en", dest="ja").text)
+    df.to_csv(output_table_filepath, index=False)
 
 
 @table.command()
