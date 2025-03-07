@@ -84,7 +84,13 @@ def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath)
 @click.option("--output_table_filepath_csv", type=str, default="/tmp/table-with-category.csv")
 @click.option("--output_table_filepath_json", type=str, default="/tmp/table-with-category.json")
 @click.option("--en-key", type=str, default="en")
-def add_categories(input_filepaths, output_table_filepath_csv, output_table_filepath_json, en_key):
+@click.option("--max-k", type=int, default=15)
+def add_categories(
+        input_filepaths,
+        output_table_filepath_csv,
+        output_table_filepath_json,
+        en_key,
+        max_k):
     dfs = [pd.read_csv(input_filepath, header=0) for input_filepath in input_filepaths]
     df = pd.concat(dfs)
 
@@ -93,7 +99,6 @@ def add_categories(input_filepaths, output_table_filepath_csv, output_table_file
     embeddings_np = embeddings.cpu().numpy()
 
     wss = []
-    max_k = 15
     for k in range(1, max_k):
         kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
         kmeans.fit(embeddings_np)
@@ -108,13 +113,13 @@ def add_categories(input_filepaths, output_table_filepath_csv, output_table_file
     optimal_k = int(input("Enter the optimal number of clusters: "))
 
     kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
-    df["Cluster"] = kmeans.fit_predict(embeddings_np)
+    df["cluster"] = kmeans.fit_predict(embeddings_np)
 
     tree = {"name": "English Sentences", "children": []}
     clusters = {}
 
     for _, row in df.iterrows():
-        cluster_name = f"Cluster {row['Cluster']}"
+        cluster_name = f"Cluster {row['cluster']}"
         if cluster_name not in clusters:
             clusters[cluster_name] = {"name": cluster_name, "children": []}
         clusters[cluster_name]["children"].append({"name": row[en_key]})
