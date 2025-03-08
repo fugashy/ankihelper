@@ -1,7 +1,7 @@
 import click
 
-from .deck import deck
 from .audio import audio
+from .table import table
 
 
 @click.group()
@@ -12,8 +12,8 @@ def ankihelper():
 
 def main():
     commands = [
-            deck,
             audio,
+            table,
             ]
     [
         ankihelper.add_command(c)
