@@ -59,7 +59,6 @@ def to_script(ctx, output_dir):
             end = segment["end"]
             text = segment["text"]
 
-            # 時間を VTT フォーマット (hh:mm:ss.sss) に変換
             def format_timestamp(seconds):
                 hours = int(seconds // 3600)
                 minutes = int((seconds % 3600) // 60)
@@ -69,4 +68,4 @@ def to_script(ctx, output_dir):
             vtt_file.write(f"{format_timestamp(start)} --> {format_timestamp(end)}\n")
             vtt_file.write(f"{text}\n\n")
 
-    print(f"VTTファイルが作成されました: {output_filename}")
+    print(f"output vtt: {output_filename}")

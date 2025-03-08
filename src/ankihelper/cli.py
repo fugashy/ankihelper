@@ -6,7 +6,6 @@ from .audio import audio
 
 @click.group()
 def ankihelper():
-    print("test")
     pass
 
 
