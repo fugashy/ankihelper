@@ -1,0 +1,33 @@
+[project]
+name = "ankihelper"
+version = "0.0.0"
+description = "A python package attempt to help you to create a Deck in term of Anki"
+authors = [
+  {name = "fugashy", email = "fugashy@icloud.com"}]
+dependencies = [
+  "genanki",
+  "click",
+  "whisper",
+  "yt_dlp",
+  "tqdm",
+  "torch",
+  "pydub",
+  "pandas",
+  "googletrans==4.0.0-rc1",
+  "numpy",
+  "matplotlib",
+  "scikit-learn",
+  "sentence-transformers",
+  "scipy",
+  "gtts"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pdm]
+python-version = 3.10
+
+
+[project.scripts]
+ankihelper = "ankihelper.cli:main"
