@@ -15,6 +15,7 @@ from sklearn.metrics import silhouette_score
 from sentence_transformers import SentenceTransformer
 from scipy.cluster.hierarchy import linkage, fcluster
 from googletrans import Translator
+from gtts import gTTS
 
 from .utils import (
         extract_english_from_vtt,

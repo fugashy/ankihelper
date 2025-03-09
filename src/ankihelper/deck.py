@@ -29,8 +29,8 @@ def from_table(input_filepaths, output_filepath, en_major):
     if en_major:
         template = {
                 "name": "Listening Card",
-                "qfmt": '{{Audio}}<br>{{EN}}',
-                "afmt": '{{FrontSide}}<hr>{{JP}}'
+                "qfmt": '{{Audio}}<br>What did they said?',
+                "afmt": '{{FrontSide}}<hr>{{EN}}<br>{{JP}}'
             }
     else:
         template = {
