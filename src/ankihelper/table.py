@@ -16,6 +16,8 @@ from sentence_transformers import SentenceTransformer
 from scipy.cluster.hierarchy import linkage, fcluster
 from googletrans import Translator
 from gtts import gTTS
+import torch
+from diffusers import StableDiffusionPipeline
 
 from .utils import (
         extract_english_from_vtt,
@@ -49,6 +51,51 @@ def from_audio_vtt(input_audio_dir, input_vtt_dir, output_table_filepath):
             }
         for lines, audio in zip(eng_lines_list, audio_filepaths)])
     df.to_csv(output_table_filepath)
+
+
+@table.command()
+@click.argument("input_table_filepath", type=str)
+@click.option("--output_table_filepath", type=str, default="/tmp/table-with-image.csv")
+@click.option("--output_image_dirpath", type=str, default="/tmp/images")
+@click.option("--image-size", type=int, default=512)
+@click.option(
+        "--model",
+        type=click.Choice([
+            "stabilityai/stable-diffusion-xl-base-1.0",
+            "SG161222/Realistic_Vision_V5.1_noVAE",
+            "runwayml/stable-diffusion-v1-5",
+            ]),
+        default="SG161222/Realistic_Vision_V5.1_noVAE")
+def add_image(
+        input_table_filepath,
+        output_table_filepath,
+        output_image_dirpath,
+        image_size,
+        model):
+    pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16)
+    pipe.to(torch.device("mps"))
+
+    shutil.rmtree(output_image_dirpath, ignore_errors=True)
+    os.makedirs(output_image_dirpath, exist_ok=True)
+
+    df = pd.read_csv(input_table_filepath, header=0)
+    image_filepaths = list()
+    for i, row in enumerate(df.itertuples()):
+        images = pipe(
+                f'The atmosphere associated with the English sentence "{row.en}"',
+                height=image_size,
+                width=image_size).images
+        imgpaths = list()
+        for j, img in enumerate(images):
+            imgpath = os.path.join(output_image_dirpath, f"image_{i}_{j}.jpg")
+            imgpaths.append(imgpath)
+            img.save(imgpath, format="JPEG")
+        image_filepaths.append(imgpaths)
+
+    df["image"] = image_filepaths
+
+    df.to_csv(output_table_filepath, index=False)
+
 
 
 @table.command()

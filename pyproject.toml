@@ -5,21 +5,27 @@ description = "A python package attempt to help you to create a Deck in term of 
 authors = [
   {name = "fugashy", email = "fugashy@icloud.com"}]
 dependencies = [
-  "genanki",
+  "accelerate",
   "click",
+  "diffusers",
+  "genanki",
+  "googletrans==4.0.0-rc1",
+  "gtts",
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "pydub",
+  "scikit-learn",
+  "scipy",
+  "sentence-transformers",
+  "torch",
+  "torchaudio",
+  "torchvision",
+  "tqdm",
+  "transformers",
   "whisper",
   "yt_dlp",
-  "tqdm",
-  "torch",
-  "pydub",
-  "pandas",
-  "googletrans==4.0.0-rc1",
-  "numpy",
-  "matplotlib",
-  "scikit-learn",
-  "sentence-transformers",
-  "scipy",
-  "gtts"]
+  ]
 
 [build-system]
 requires = ["setuptools", "wheel"]
