@@ -21,25 +21,25 @@ def deck():
 @deck.command()
 @click.argument("input_filepaths", type=str, nargs=-1)
 @click.option("--output_filepath", type=str, default="/tmp/table.apkg")
-@click.option("--en_major", is_flag=True, default=False)
-def from_table(input_filepaths, output_filepath, en_major):
+@click.option("--jp_major", is_flag=True, default=False)
+def from_table(input_filepaths, output_filepath, jp_major):
     name = os.path.basename(output_filepath)
     dfs = [
             pd.read_csv(
                 input_filepath, header=0, usecols=["en", "jp", "en_audio"])
             for input_filepath in input_filepaths]
 
-    if en_major:
-        template = {
-                "name": "Listening Card",
-                "qfmt": '{{Audio}}<br>What did they said?',
-                "afmt": '{{FrontSide}}<hr>{{EN}}<br>{{JP}}'
-            }
-    else:
+    if jp_major:
         template = {
                 "name": "Listening Card",
                 "qfmt": '{{JP}}',
                 "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}'
+            }
+    else:
+        template = {
+                "name": "Listening Card",
+                "qfmt": '{{Audio}}<br>What did they said?',
+                "afmt": '{{FrontSide}}<hr>{{EN}}<br>{{JP}}'
             }
 
     model = genanki.Model(

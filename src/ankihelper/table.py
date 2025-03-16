@@ -33,8 +33,8 @@ def table():
 @click.argument("input_audio_dir", type=str)
 @click.argument("input_vtt_dir", type=str)
 @click.option("--output_table_filepath", type=str, default="/tmp/vtt.csv")
-def from_audio_vtt(input_audio_dir, input_vtt_dir, output_table_filepath):
-    audio_filepaths = sorted(glob(os.path.join(input_audio_dir, "*.mp3")))
+def from_audio_vtt_pairs(input_audio_dir, input_vtt_dir, output_table_filepath):
+    audio_filepaths = sorted(glob(os.path.join(input_audio_dir, "*")))
     vtt_filepaths = sorted(glob(os.path.join(input_vtt_dir, "*.vtt")))
     if len(audio_filepaths) != len(vtt_filepaths):
         print(f"audio_filepaths num must be the same vtt_filepaths")
@@ -46,7 +46,7 @@ def from_audio_vtt(input_audio_dir, input_vtt_dir, output_table_filepath):
 
     df = pd.DataFrame.from_dict([
         {
-            "en": lines,
+            "en": "<br>".join(lines),
             "en_audio": audio
             }
         for lines, audio in zip(eng_lines_list, audio_filepaths)])
@@ -127,10 +127,10 @@ def add_trans(input_table_filepath, output_table_filepath):
 @click.option("--output_audio_dirpath", type=str, default="/tmp/audio")
 @click.option("--output_table_filepath", type=str, default="/tmp/table-with-audio.csv")
 def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath):
-    df = pd.read_csv(input_table_filepath)
+    df = pd.read_csv(input_table_filepath, quotechar='"')
     english_texts = df["en"]
 
-    shutil.rmtree(output_audio_dirpath)
+    shutil.rmtree(output_audio_dirpath, ignore_errors=True)
     os.makedirs(output_audio_dirpath, exist_ok=True)
 
     audio_paths = []
