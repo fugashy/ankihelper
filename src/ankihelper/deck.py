@@ -1,9 +1,12 @@
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import click
 import pandas as pd
 import genanki
 import subprocess
+from tqdm import tqdm
+import numpy as np
 
 from .utils import (
         convert_vtt_time,
@@ -119,23 +122,23 @@ def from_audio_and_vtt(audio_filepath, vtt_filepath, audio_offset_sec_start, aud
 
     print("📚 Ankiデッキを作成中...")
     model = genanki.Model(
-        1234567890,
-        "Simple Listening Model",
+        np.random.randint(0, int(1e10)),
+        f"{audio_name} Listening Model",
         fields=[
             {"name": "Audio"},
             {"name": "Text"},
             ],
         templates=[
             {
-                "name": "Listening Card",
-                "qfmt": '<audio controls><source src="{{Audio}}" type="audio/mpeg"></audio><br>'
+                "name": f"{audio_name} Listening Card",
+                "qfmt": '{{Audio}}<br>'
                         'What did they say?',
                 "afmt": '{{FrontSide}}<hr>{{Text}}'
             }
         ]
     )
 
-    deck = genanki.Deck(987654321, audio_name)
+    deck = genanki.Deck(np.random.randint(0, int(1e10)), audio_name)
     for _, (audio, text) in sorted(cards):
         note = genanki.Note(
             model=model,
