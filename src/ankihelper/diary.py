@@ -26,7 +26,7 @@ def add(text, image_size):
 
     ic("writing text...")
     with open(os.path.join(dirpath, "text.txt"), "w") as f:
-        f.write(text)
+        [f.write(f"{t}.\n") for t in text.split(". ")]
 
     ic("generate audio...")
     tts = gTTS(text, lang='en')
