@@ -17,7 +17,7 @@ def audio(ctx, audio_filepath):
 @audio.command()
 @click.option("--output_dir", type=str, default="/tmp/cliped")
 @click.option("--min_silence_len", type=int, default=500)
-@click.option("--silence_thresh", type=int, default=-40)
+@click.option("--silence_thresh", type=int, default=-60)
 @click.pass_context
 def clip_per_silence(ctx, output_dir, min_silence_len, silence_thresh):
     os.makedirs(output_dir, exist_ok=True)
