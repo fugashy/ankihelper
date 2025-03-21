@@ -26,8 +26,14 @@ pip install .
   # create scripts with each audio files
   for f in /tmp/cliped/*.mp3; do ankihelper audio "$f" to-script; done
 
-  # create table from the audio clips and the scripts
+  # create table from the audio clips and the scripts(the output path is /tmp/table.csv)
   ankihelper table from-audio-vtt-pairs /tmp/cliped /tmp/script
+
+  # remove duplicated rows
+  ankihelper table drop-duplocates /tmp/table.csv
+
+  # add a column that contain translations
+  ankihelper table add-trans /tmp/table.csv-dropped.csv
   ```
 
 ### Create a deck from a table

@@ -30,6 +30,20 @@ def table():
 
 
 @table.command()
+@click.argument("table_filepath", type=str)
+@click.option("--column", type=str, default="en")
+def drop_duplicates(table_filepath, column):
+    df = pd.read_csv(table_filepath, header=0)
+
+    df_dropped = df.drop_duplicates(
+            subset=[column],
+            keep="last")
+    basename = os.path.basename(table_filepath)
+    df_dropped.to_csv(f"/tmp/{basename}-dropped.csv", index=False)
+
+
+
+@table.command()
 @click.argument("input_audio_dir", type=str)
 @click.argument("input_vtt_dir", type=str)
 @click.option("--output_table_filepath", type=str, default="/tmp/table.csv")
@@ -50,7 +64,7 @@ def from_audio_vtt_pairs(input_audio_dir, input_vtt_dir, output_table_filepath):
             "en_audio": audio
             }
         for lines, audio in zip(eng_lines_list, audio_filepaths)])
-    df.to_csv(output_table_filepath)
+    df.to_csv(output_table_filepath, index=False)
 
 
 @table.command()
