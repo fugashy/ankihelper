@@ -25,6 +25,9 @@ pip install .
 
   # create scripts with each audio files
   for f in /tmp/cliped/*.mp3; do ankihelper audio "$f" to-script; done
+
+  # create table from the audio clips and the scripts
+  ankihelper table from-audio-vtt-pairs /tmp/cliped /tmp/script
   ```
 
 ### Create a deck from a table

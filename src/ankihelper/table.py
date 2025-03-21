@@ -32,7 +32,7 @@ def table():
 @table.command()
 @click.argument("input_audio_dir", type=str)
 @click.argument("input_vtt_dir", type=str)
-@click.option("--output_table_filepath", type=str, default="/tmp/vtt.csv")
+@click.option("--output_table_filepath", type=str, default="/tmp/table.csv")
 def from_audio_vtt_pairs(input_audio_dir, input_vtt_dir, output_table_filepath):
     audio_filepaths = sorted(glob(os.path.join(input_audio_dir, "*")))
     vtt_filepaths = sorted(glob(os.path.join(input_vtt_dir, "*.vtt")))
@@ -46,7 +46,7 @@ def from_audio_vtt_pairs(input_audio_dir, input_vtt_dir, output_table_filepath):
 
     df = pd.DataFrame.from_dict([
         {
-            "en": "<br>".join(lines),
+            "en": lines,
             "en_audio": audio
             }
         for lines, audio in zip(eng_lines_list, audio_filepaths)])
