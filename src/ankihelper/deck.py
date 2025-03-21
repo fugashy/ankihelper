@@ -23,6 +23,7 @@ def deck():
 @click.option("--output_filepath", type=str, default="/tmp/table.apkg")
 @click.option("--jp_major", is_flag=True, default=False)
 def from_table(input_filepaths, output_filepath, jp_major):
+    print(input_filepaths)
     name = os.path.basename(output_filepath)
     dfs = [
             pd.read_csv(
@@ -43,7 +44,7 @@ def from_table(input_filepaths, output_filepath, jp_major):
             }
 
     model = genanki.Model(
-        1234567890,
+        np.random.randint(1, int(1e10)),
         f"{name} Model",
         fields=[
             {"name": "JP"},
@@ -53,7 +54,7 @@ def from_table(input_filepaths, output_filepath, jp_major):
         templates=[template]
     )
 
-    deck = genanki.Deck(987654321, name)
+    deck = genanki.Deck(np.random.randint(1, int(1e10)), name)
     audio_filepaths = list()
     for df in dfs:
         for row in df.itertuples():

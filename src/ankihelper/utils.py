@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import re
+from icecream import ic
 
 def convert_vtt_time(vtt_time, offset=0):
     """VTTの時間フォーマット (hh:mm:ss.sss) を ffmpeg 用 (hh:mm:ss) に変換し、offset(秒)を加える"""
@@ -39,3 +40,47 @@ def extract_english_from_vtt(file_path):
             extracted_text.append(line)
 
     return "\n".join(extracted_text)
+
+
+def format_timestamp(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    return f"{hours:02}:{minutes:02}:{secs:06.3f}".replace('.', ',')
+
+
+def save_whisper_result_as_vtt(result, output_filepath):
+    sentenses = list()
+    ranges = list()
+    tmp = list()
+    st = None
+    et = None
+    for seg in result["segments"]:
+        for word in seg["words"]:
+            if st is None:
+                st = word["start"]
+            tmp.append(word["word"])
+
+            if "Mr." in word["word"]:
+                continue
+
+            if "." in word["word"] or "?" in word["word"]:
+                et = word["end"]
+                sentenses.append(tmp)
+                ranges.append((st, et))
+
+                st = None
+                et = None
+                tmp = list()
+
+    ic(len(sentenses))
+    ic(len(ranges))
+
+    with open(output_filepath, "w", encoding="utf-8") as vtt_file:
+        vtt_file.write("WEBVTT\n\n")  # VTTのヘッダー
+
+        for sentence, range_ in zip(sentenses, ranges):
+            vtt_file.write(f"{format_timestamp(range_[0])} --> {format_timestamp(range_[1])}\n")
+            vtt_file.write(f"{"".join(sentence)}\n\n")
+
+    ic("done")

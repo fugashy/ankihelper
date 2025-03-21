@@ -1,10 +1,15 @@
 import os
+import shutil
+from icecream import ic
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 import torch
 import whisper
+import json
 
 import click
+
+from .utils import save_whisper_result_as_vtt
 
 @click.group()
 @click.argument("audio_filepath", type=str)
@@ -20,6 +25,7 @@ def audio(ctx, audio_filepath):
 @click.option("--silence_thresh", type=int, default=-60)
 @click.pass_context
 def clip_per_silence(ctx, output_dir, min_silence_len, silence_thresh):
+    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
     input_filename = ctx.obj["audio_filepath"].split("/")[-1].split(".")[0]
     audio = AudioSegment.from_file(ctx.obj["audio_filepath"])
@@ -42,7 +48,10 @@ def to_script(ctx, output_dir):
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     try:
         model = whisper.load_model("small", device="cpu").to(device)
-    except NotImplementedError:
+        print("Use MPS")
+    except NotImplementedError as e:
+        print(e)
+        print("Use CPU")
         model = whisper.load_model("small", device="cpu")
     result = model.transcribe(
             ctx.obj["audio_filepath"],
@@ -50,22 +59,4 @@ def to_script(ctx, output_dir):
 
     os.makedirs(output_dir, exist_ok=True)
     output_filename = f'{os.path.basename(ctx.obj["audio_filepath"])}.vtt'
-
-    with open(os.path.join(output_dir, output_filename), "w", encoding="utf-8") as vtt_file:
-        vtt_file.write("WEBVTT\n\n")  # VTTのヘッダー
-
-        for segment in result["segments"]:
-            start = segment["start"]
-            end = segment["end"]
-            text = segment["text"]
-
-            def format_timestamp(seconds):
-                hours = int(seconds // 3600)
-                minutes = int((seconds % 3600) // 60)
-                secs = seconds % 60
-                return f"{hours:02}:{minutes:02}:{secs:06.3f}".replace('.', ',')
-
-            vtt_file.write(f"{format_timestamp(start)} --> {format_timestamp(end)}\n")
-            vtt_file.write(f"{text}\n\n")
-
-    print(f"output vtt: {output_filename}")
+    save_whisper_result_as_vtt(result, os.path.join(output_dir, output_filename))

@@ -31,6 +31,24 @@ def table():
 
 @table.command()
 @click.argument("table_filepath", type=str)
+@click.option("--rows-per-file", type=int, default=300)
+@click.option("--output_dirpath", type=str, default="/tmp/chunk_df")
+def split(table_filepath, rows_per_file, output_dirpath):
+    shutil.rmtree(output_dirpath, ignore_errors=True)
+    os.makedirs(output_dirpath, exist_ok=True)
+
+    df = pd.read_csv(table_filepath, header=0)
+
+    for i in range(0, len(df), rows_per_file):
+        chunk_df = df.iloc[i:i+rows_per_file]
+        output_filepath = os.path.join(
+                output_dirpath, f"chunk_df_{i // rows_per_file + 1}.csv")
+        chunk_df.to_csv(output_filepath, index=False)
+
+
+
+@table.command()
+@click.argument("table_filepath", type=str)
 @click.option("--column", type=str, default="en")
 def drop_duplicates(table_filepath, column):
     df = pd.read_csv(table_filepath, header=0)

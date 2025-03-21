@@ -15,6 +15,15 @@ pip install .
 
 - Pattern A
 
+  When using a audio file that contain long talking
+
+  ```bash
+  ankihelper audio /path/to/audio to-script
+  ankihelper deck from-audio-and-vtt /path/to/audio /tmp/YOUR_AUDIO_FILENAME.vtt
+  ```
+
+- Pattern B
+
   When using unit-by-unit audio data such as that included in learning materials.
 
   ```bash
@@ -34,6 +43,12 @@ pip install .
 
   # add a column that contain translations
   ankihelper table add-trans /tmp/table.csv-dropped.csv
+
+  # split table
+  ankihelper table split /tmp/table-with-trans.csv
+
+  # create decks
+  for f in /tmp/chunk_df/*.csv; do ankihelper deck from-table "$f" --output_filepath "$f".apkg; done
   ```
 
 ### Create a deck from a table
