@@ -25,7 +25,6 @@ def audio(ctx, audio_filepath):
 @click.option("--silence_thresh", type=int, default=-60)
 @click.pass_context
 def clip_per_silence(ctx, output_dir, min_silence_len, silence_thresh):
-    shutil.rmtree(output_dir, ignore_errors=True)
     os.makedirs(output_dir, exist_ok=True)
     input_filename = ctx.obj["audio_filepath"].split("/")[-1].split(".")[0]
     audio = AudioSegment.from_file(ctx.obj["audio_filepath"])
