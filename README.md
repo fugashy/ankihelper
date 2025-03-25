@@ -65,6 +65,16 @@ pip install .
   ankihelper deck from-table /tmp/table-with-audio.csv
   ```
 
+- Pattern B
+
+  From a csv file that have a column "en"
+
+  ```bash
+  ankihelper table add-trans /path/to/csvfile
+  ankihelper table add-audio /path/to/table-with-trans
+  ankihelper deck from-table /tmp/table-with-audio.csv
+  ```
+
 ### Create a deck from your English diary
 
 ```bash
