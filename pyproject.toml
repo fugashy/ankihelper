@@ -26,6 +26,7 @@ dependencies = [
   "transformers",
   "whisper",
   "yt_dlp",
+  "pdfplumber",
   ]
 
 [build-system]
