@@ -1,6 +1,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from icecream import ic
 import click
 import pandas as pd
 import genanki
@@ -23,7 +24,7 @@ def deck():
 @click.option("--output_filepath", type=str, default="/tmp/table.apkg")
 @click.option("--jp_major", is_flag=True, default=False)
 def from_table(input_filepaths, output_filepath, jp_major):
-    print(input_filepaths)
+    ic(input_filepaths)
     name = os.path.basename(output_filepath)
     dfs = [
             pd.read_csv(
@@ -34,13 +35,13 @@ def from_table(input_filepaths, output_filepath, jp_major):
         template = {
                 "name": "Listening Card",
                 "qfmt": '{{JP}}',
-                "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}'
+                "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}<br>{{MEMO}}'
             }
     else:
         template = {
                 "name": "Listening Card",
                 "qfmt": '{{Audio}}<br>What did they said?',
-                "afmt": '{{FrontSide}}<hr>{{EN}}<br>{{JP}}'
+                "afmt": '{{FrontSide}}<hr>{{EN}}<br>{{JP}}<br>{{MEMO}}'
             }
 
     model = genanki.Model(
@@ -50,6 +51,7 @@ def from_table(input_filepaths, output_filepath, jp_major):
             {"name": "JP"},
             {"name": "EN"},
             {"name": "Audio"},
+            {"name": "MEMO"},
             ],
         templates=[template]
     )
@@ -65,7 +67,8 @@ def from_table(input_filepaths, output_filepath, jp_major):
                 fields=[
                     row.jp,
                     row.en,
-                    audio_filename.replace(audio_filename, f"[sound:{audio_filename}]")]
+                    audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
+                    ""]
             )
             deck.add_note(note)
 

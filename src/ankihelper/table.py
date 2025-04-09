@@ -60,6 +60,15 @@ def drop_duplicates(table_filepath, column):
     df_dropped.to_csv(f"/tmp/{basename}-dropped.csv", index=False)
 
 
+@table.command()
+@click.argument("table_filepaths", type=str, nargs=-1)
+@click.option("-o", "--output_filepath", type=str, default="/tmp/merged.csv")
+def merge(table_filepaths, output_filepath):
+    dfs = [pd.read_csv(f, header=0) for f in table_filepaths]
+    merged_df = pd.concat(dfs)
+    merged_df.to_csv(output_filepath, index=False)
+
+
 
 @table.command()
 @click.argument("input_audio_dir", type=str)
