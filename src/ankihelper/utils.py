@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import re
 from icecream import ic
+from googletrans import Translator
+from google.cloud import translate_v2 as GCloudTranslator
 
 def convert_vtt_time(vtt_time, offset=0):
     """VTTの時間フォーマット (hh:mm:ss.sss) を ffmpeg 用 (hh:mm:ss) に変換し、offset(秒)を加える"""
@@ -84,3 +86,40 @@ def save_whisper_result_as_vtt(result, output_filepath):
             vtt_file.write(f"{"".join(sentence)}\n\n")
 
     ic("done")
+
+
+class ITranslator():
+    def translate(
+            self,
+            text: str,
+            src: str,
+            dest: str) -> str:
+        raise NotImplementedError
+
+
+class GoogleTranslator(ITranslator):
+    def __init__(self):
+        self._translator = Translator()
+
+    def translate(self, text, src, dest):
+        return self._translator.translate(text, src=src, dest=dest).text
+
+
+class GoogleCloudTranslator(ITranslator):
+    def __init__(self):
+        self._translator = GCloudTranslator.Client()
+
+    def translate(self, text, src, dest):
+        result = self._translator.translate(
+                text,
+                source_language=src,
+                target_language=dest)
+        return result["translatedText"]
+
+
+def create_translator(type_: str):
+    translator_by = {
+            "google-trans": GoogleTranslator,
+            "gcloud": GoogleCloudTranslator,
+            }
+    return translator_by[type_]()

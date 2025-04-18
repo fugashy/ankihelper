@@ -45,7 +45,7 @@ def from_table(input_filepaths, output_filepath, jp_major):
             }
 
     model = genanki.Model(
-        np.random.randint(1, int(1e10)),
+        28282828,
         f"{name} Model",
         fields=[
             {"name": "JP"},
@@ -56,7 +56,7 @@ def from_table(input_filepaths, output_filepath, jp_major):
         templates=[template]
     )
 
-    deck = genanki.Deck(np.random.randint(1, int(1e10)), name)
+    deck = genanki.Deck(28282828, name)
     audio_filepaths = list()
     for df in dfs:
         for row in df.itertuples():

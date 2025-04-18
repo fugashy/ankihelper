@@ -14,13 +14,13 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sentence_transformers import SentenceTransformer
 from scipy.cluster.hierarchy import linkage, fcluster
-from googletrans import Translator
 from gtts import gTTS
 import torch
 from diffusers import StableDiffusionPipeline
 
 from .utils import (
         extract_english_from_vtt,
+        create_translator,
         )
 
 
@@ -142,20 +142,25 @@ def add_image(
 @table.command()
 @click.argument("input_table_filepath", type=str)
 @click.option("--output_table_filepath", type=str, default="/tmp/table-with-trans.csv")
-def add_trans(input_table_filepath, output_table_filepath):
+@click.option(
+        "--client-type",
+        type=click.Choice(
+            ["google-trans", "gcloud"]),
+        default="google-trans")
+def add_trans(input_table_filepath, output_table_filepath, client_type):
     df = pd.read_csv(input_table_filepath, header=0)
 
-    translator = Translator()
+    translator = create_translator(client_type)
 
     def translate_text(text, retries=3):
         print(f"try to translate: {text}")
         for attempt in range(retries):
             try:
-                translation = translator.translate(text, src="en", dest="ja").text
+                translation = translator.translate(text=text, src="en", dest="ja")
                 time.sleep(random.uniform(1, 3))  # 1〜3秒のランダムな遅延
                 return translation
             except Exception as e:
-                print(f"⚠️ Too many requests: {e}")
+                print(f"{e}")
                 time.sleep(5)  # 5秒待機してリトライ
         return "Error"
 
