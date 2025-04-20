@@ -49,12 +49,13 @@ def to_script(ctx, output_dir):
         model = whisper.load_model("small", device="cpu").to(device)
         print("Use MPS")
     except NotImplementedError as e:
-        print(e)
-        print("Use CPU")
         model = whisper.load_model("small", device="cpu")
+        print("Use CPU")
     result = model.transcribe(
             ctx.obj["audio_filepath"],
             word_timestamps=True)
+    with open("/tmp/script.json", "w") as f:
+        json.dump(result, f, indent=2)
 
     os.makedirs(output_dir, exist_ok=True)
     output_filename = f'{os.path.basename(ctx.obj["audio_filepath"])}.vtt'
