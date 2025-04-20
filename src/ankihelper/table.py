@@ -157,7 +157,8 @@ def add_trans(input_table_filepath, output_table_filepath, client_type):
         for attempt in range(retries):
             try:
                 translation = translator.translate(text=text, src="en", dest="ja")
-                time.sleep(random.uniform(1, 3))  # 1〜3秒のランダムな遅延
+                if client_type != "gcloud":
+                    time.sleep(random.uniform(1, 3))  # 1〜3秒のランダムな遅延
                 return translation
             except Exception as e:
                 print(f"{e}")
