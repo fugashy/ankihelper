@@ -9,7 +9,9 @@ import json
 
 import click
 
-from .utils import save_whisper_result_as_vtt
+from .utils import (
+        save_whisper_result_as_vtt,
+        )
 
 @click.group()
 @click.argument("audio_filepath", type=str)

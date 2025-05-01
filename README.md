@@ -15,11 +15,13 @@ pip install .
 
 - Pattern A
 
-  When using a audio file that contain long talking
+  When using a audio file that contain long talks
 
   ```bash
   ankihelper audio /path/to/audio to-script
-  ankihelper deck from-audio-and-vtt /path/to/audio /tmp/YOUR_AUDIO_FILENAME.vtt
+  ankihelper table from-audio-vtt-pair /path/to/audio /tmp/script/AUDIO_FILENAME.vtt
+  ankihelper table add-trans /tmp/table.csv
+  ankihelper deck from-table /tmp/table-with-trans.csv
   ```
 
 - Pattern B

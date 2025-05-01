@@ -1,8 +1,14 @@
 from datetime import datetime, timedelta
+import os
 import re
+import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from icecream import ic
+from tqdm import tqdm
 from googletrans import Translator
 from google.cloud import translate_v2 as GCloudTranslator
+
 
 def convert_vtt_time(vtt_time, offset=0):
     """VTTの時間フォーマット (hh:mm:ss.sss) を ffmpeg 用 (hh:mm:ss) に変換し、offset(秒)を加える"""
@@ -12,7 +18,7 @@ def convert_vtt_time(vtt_time, offset=0):
 
 
 def parse_vtt(vtt_filepath):
-    print("🔍 VTT字幕を解析中...")
+    ic("reading vtt", vtt_filepath)
     with open(vtt_filepath, "r", encoding="utf-8") as f:
         vtt_content = f.read()
 
@@ -20,6 +26,7 @@ def parse_vtt(vtt_filepath):
         r"(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*\n([\s\S]*?)(?=\n\d{2}:\d{2}:\d{2}|\Z)",
         re.MULTILINE
     )
+
     return pattern.findall(vtt_content)
 
 
@@ -123,3 +130,47 @@ def create_translator(type_: str):
             "gcloud": GoogleCloudTranslator,
             }
     return translator_by[type_]()
+
+
+def clip_by_script(
+        audio_filepath,
+        vtt_filepath,
+        offset_start,
+        offset_end,
+        output_dirpath):
+
+    matches = parse_vtt(vtt_filepath)
+
+    def process_section(idx, start, end, text, audio_offset=0, image_offset=0):
+        text = text.strip()
+        output_audio = os.path.join(output_dirpath, f"audio-{idx:04d}.mp3")
+
+        start_audio = convert_vtt_time(start, offset=offset_start)
+        end_audio   = convert_vtt_time(end, offset=offset_end)
+
+        subprocess.run([
+            "ffmpeg", "-i", audio_filepath,
+            "-ss", start_audio, "-to", end_audio,
+            "-q:a", "0", "-map", "a", "-f", "mp3", output_audio, "-y"
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        return {
+                "id": idx,
+                "filename": os.path.basename(output_audio),
+                "en_audio": output_audio,
+                "en": text
+                }
+
+    results = []
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = []
+        for idx, (start, end, text) in enumerate(matches):
+            futures.append(executor.submit(process_section, idx, start, end, text))
+        for future in tqdm(as_completed(futures), total=len(futures)):
+            try:
+                results.append(future.result())
+            except Exception as e:
+                ic(e)
+
+    subprocess.run(["reset"])
+    return sorted(results, key=lambda x: x["id"])

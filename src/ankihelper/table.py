@@ -6,6 +6,7 @@ import json
 from glob import glob
 
 import click
+from icecream import ic
 import pandas as pd
 from googletrans import Translator
 import numpy as np
@@ -21,6 +22,7 @@ from diffusers import StableDiffusionPipeline
 from .utils import (
         extract_english_from_vtt,
         create_translator,
+        clip_by_script,
         )
 
 
@@ -92,6 +94,33 @@ def from_audio_vtt_pairs(input_audio_dir, input_vtt_dir, output_table_filepath):
             }
         for lines, audio in zip(eng_lines_list, audio_filepaths)])
     df.to_csv(output_table_filepath, index=False)
+
+
+@table.command()
+@click.argument("audio_filepath", type=str)
+@click.argument("vtt_filepath", type=str)
+@click.option("-aos", "--audio-offset-sec_start", type=float, default=0.)
+@click.option("-aoe", "--audio-offset-sec_end", type=float, default=0.5)
+@click.option("--output_dir", type=str, default="/tmp/cliped")
+@click.pass_context
+def from_audio_vtt_pair(
+        ctx,
+        audio_filepath,
+        vtt_filepath,
+        audio_offset_sec_start,
+        audio_offset_sec_end,
+        output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
+    results = clip_by_script(
+            audio_filepath,
+            vtt_filepath,
+            audio_offset_sec_start,
+            audio_offset_sec_end,
+            output_dir)
+
+    df = pd.DataFrame.from_dict(results)
+    df.to_csv("/tmp/table.csv", index=False)
 
 
 @table.command()
