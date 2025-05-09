@@ -5,6 +5,7 @@ from .table import table
 from .deck import deck
 from .diary import diary
 from .text import text
+from .image import image
 
 
 @click.group()
@@ -20,6 +21,7 @@ def main():
             deck,
             diary,
             text,
+            image,
             ]
     [
         ankihelper.add_command(c)
