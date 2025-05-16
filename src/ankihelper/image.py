@@ -16,16 +16,15 @@ def image(ctx):
 @click.option(
         "--model",
         type=click.Choice([
-            "stabilityai/stable-diffusion-xl-base-1.0",
             "SG161222/Realistic_Vision_V5.1_noVAE",
             "runwayml/stable-diffusion-v1-5",
             ]),
-        default="runwayml/stable-diffusion-v1-5")
+        default="SG161222/Realistic_Vision_V5.1_noVAE")
 @click.option(
         "--prefix",
         "-p",
         type=str,
-        default='The atmosphere associated with the English sentence "{text}"')
+        default='The atmosphere associated with the English sentence')
 @click.option("--image-width", type=int, default=720)
 @click.option("--image-height", type=int, default=480)
 @click.option("--output-dir-path", "-o", type=str, default="/tmp")
@@ -43,7 +42,7 @@ def from_text(
 
     images = pipe(
             prompt=f'{prefix}: "{text}"',
-            negative_prompt="ext, letters, words, watermark",
+            negative_prompt="ext, letters, words, watermark, negative",
             height=image_height,
             width=image_width).images
 

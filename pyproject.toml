@@ -28,6 +28,7 @@ dependencies = [
   "whisper",
   "yt_dlp",
   "pdfplumber",
+  "pytesseract",
   ]
 
 [build-system]

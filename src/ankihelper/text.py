@@ -6,6 +6,9 @@ import click
 from icecream import ic
 import pdfplumber
 import pandas as pd
+from PIL import Image
+import pytesseract
+
 
 from .utils import format_timestamp
 
@@ -31,6 +34,18 @@ def from_pdf(input_filepath, output_dirpath):
                     "w") as f:
                 f.write(page.extract_text())
 
+
+@text.command()
+@click.argument("input_filepaths", type=str, nargs=-1)
+@click.option("-l", "--lang", type=click.Choice(["eng", "jpn"]), default="eng")
+def from_image(input_filepaths, lang):
+    ic(input_filepaths)
+    images = [Image.open(f) for f in input_filepaths]
+    ic("extract text...")
+    texts = [pytesseract.image_to_string(image, lang=lang) for image in images]
+    ic(texts)
+    with open(f"/tmp/text-from-image-{lang}.txt", "w") as f:
+        [f.write(text) for text in texts]
 
 @text.command()
 @click.argument("input_filepath", type=str)
