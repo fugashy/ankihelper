@@ -8,6 +8,7 @@ import pdfplumber
 import pandas as pd
 from PIL import Image
 import pytesseract
+from gtts import gTTS
 
 
 from .utils import format_timestamp
@@ -17,6 +18,20 @@ from .utils import format_timestamp
 @click.group()
 def text():
     pass
+
+
+@text.command()
+@click.argument("input_text", type=str)
+@click.option("--lang", "-l", type=click.Choice(["en", "jp"]), default="en")
+def to_audio(input_text, lang):
+    ic(input_text)
+
+    tts = gTTS(input_text, lang=lang)
+    output_filename = input_text.lower().replace(" ", "-").strip("'\`\"\'.[]()!?/\\")
+    output_filepath = f"/tmp/{output_filename}.mp3"
+    tts.save(output_filepath)
+    ic(output_filepath)
+
 
 @text.command()
 @click.argument("input_filepath", type=str)
@@ -46,6 +61,7 @@ def from_image(input_filepaths, lang):
     ic(texts)
     with open(f"/tmp/text-from-image-{lang}.txt", "w") as f:
         [f.write(text) for text in texts]
+
 
 @text.command()
 @click.argument("input_filepath", type=str)

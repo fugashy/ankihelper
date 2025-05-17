@@ -18,8 +18,9 @@ def image(ctx):
         type=click.Choice([
             "SG161222/Realistic_Vision_V5.1_noVAE",
             "runwayml/stable-diffusion-v1-5",
+            "gsdf/Counterfeit-V2.5",
             ]),
-        default="SG161222/Realistic_Vision_V5.1_noVAE")
+        default="gsdf/Counterfeit-V2.5")
 @click.option(
         "--prefix",
         "-p",
