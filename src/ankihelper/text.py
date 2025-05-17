@@ -11,7 +11,10 @@ import pytesseract
 from gtts import gTTS
 
 
-from .utils import format_timestamp
+from .utils import (
+        format_timestamp,
+        create_translator,
+        )
 
 
 
@@ -22,12 +25,14 @@ def text():
 
 @text.command()
 @click.argument("input_text", type=str)
+@click.option("--output_filename", type=str, default=None)
 @click.option("--lang", "-l", type=click.Choice(["en", "jp"]), default="en")
-def to_audio(input_text, lang):
+def to_audio(input_text, output_filename, lang):
     ic(input_text)
 
     tts = gTTS(input_text, lang=lang)
-    output_filename = input_text.lower().replace(" ", "-").strip("'\`\"\'.[]()!?/\\")
+    if output_filename is None:
+        output_filename = input_text.lower().replace(" ", "-").strip("'\`\"\'.[]()!?/\\")
     output_filepath = f"/tmp/{output_filename}.mp3"
     tts.save(output_filepath)
     ic(output_filepath)
@@ -61,6 +66,27 @@ def from_image(input_filepaths, lang):
     ic(texts)
     with open(f"/tmp/text-from-image-{lang}.txt", "w") as f:
         [f.write(text) for text in texts]
+
+
+@text.command()
+@click.argument("input_text", type=str)
+@click.option(
+        "--client-type",
+        type=click.Choice(
+            ["google-trans", "gcloud"]),
+        default="google-trans")
+@click.option("--src", type=click.Choice(["en", "ja"]), default="en")
+@click.option("--dest", type=click.Choice(["en", "ja"]), default="ja")
+def translate(input_text, client_type, src, dest):
+    translator = create_translator(client_type)
+
+    translated_text = translator.translate(
+            text=input_text,
+            src=src,
+            dest=dest)
+
+    with open("/tmp/translated.txt", "w") as f:
+        f.write(translated_text)
 
 
 @text.command()
