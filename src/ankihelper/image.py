@@ -1,8 +1,10 @@
 import os
 
+from icecream import ic
 import click
 import torch
 from diffusers import StableDiffusionPipeline
+import huggingface_hub
 
 
 @click.group()
@@ -17,32 +19,42 @@ def image(ctx):
         "--model",
         type=click.Choice([
             "SG161222/Realistic_Vision_V5.1_noVAE",
-            "runwayml/stable-diffusion-v1-5",
-            "gsdf/Counterfeit-V2.5",
+            "runwayml/stable-diffusion-v1-5",  # float32 リアル 濃い
+            "gsdf/Counterfeit-V2.5",  # float32 アニメ風 淡い
+            "Lykon/dreamshaper-7",  # float32 3Dアニメ風 濃い
+            "Meina/MeinaMix_V11",  # float32 アニメ風
             ]),
-        default="gsdf/Counterfeit-V2.5")
-@click.option(
-        "--prefix",
-        "-p",
-        type=str,
-        default='The atmosphere associated with the English sentence')
+        default="Meina/MeinaMix_V11")
 @click.option("--image-width", type=int, default=720)
 @click.option("--image-height", type=int, default=480)
 @click.option("--output-dir-path", "-o", type=str, default="/tmp")
+@click.option("--huggingface-token", type=str, default=os.environ.get("HUGGINGFACE_TOKEN"))
 @click.pass_context
 def from_text(
         ctx,
         text,
         model,
-        prefix,
         image_width,
         image_height,
-        output_dir_path):
-    pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16)
-    pipe.to(torch.device("mps"))
+        output_dir_path,
+        huggingface_token):
+    if huggingface_token is not None:
+        ic("use hugging face token to use models")
+        huggingface_hub.login(huggingface_token)
+
+    try:
+        pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float32, safety_checker=None)
+        ic("use float32")
+    except:
+        pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16, safety_checker=None)
+        ic("use float16")
+
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    ic(device)
+    pipe = pipe.to(device)
 
     images = pipe(
-            prompt=f'{prefix}: "{text}"',
+            prompt=text,
             negative_prompt="ext, letters, words, watermark, negative",
             height=image_height,
             width=image_width).images
