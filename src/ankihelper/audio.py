@@ -47,12 +47,14 @@ def clip_per_silence(ctx, output_dir, min_silence_len, silence_thresh):
 @click.pass_context
 def to_script(ctx, output_dir):
     device = "mps" if torch.backends.mps.is_available() else "cpu"
+    ic(device)
     try:
-        model = whisper.load_model("small", device="cpu").to(device)
-        print("Use MPS")
+        model = whisper.load_model("small").to(device)
+        ic("Use MPS")
     except NotImplementedError as e:
+        ic(e)
         model = whisper.load_model("small", device="cpu")
-        print("Use CPU")
+        ic("Use CPU")
     result = model.transcribe(
             ctx.obj["audio_filepath"],
             word_timestamps=True)

@@ -9,6 +9,7 @@ import pandas as pd
 from PIL import Image
 import pytesseract
 from gtts import gTTS
+import spacy
 
 
 from .utils import (
@@ -125,3 +126,49 @@ def whisper_result_to_vtt(input_filepath):
         for row in df.itertuples():
             f.write(f"{format_timestamp(row.st)} --> {format_timestamp(row.et)}\n")
             f.write(f"{row.en}\n\n")
+
+@text.command()
+@click.argument("input_filepath", type=str)
+def fix_whisper_result(input_filepath):
+    ic(input_filepath)
+    ic.disable()
+    with open(input_filepath, "r") as f:
+        result = json.load(f)
+
+    all_text = ic(" ".join([seg["text"].strip() for seg in result["segments"]]))
+
+    nlp = spacy.load("en_core_web_sm")
+    doc = nlp(all_text)
+    sentences = ic([sent.text.strip() for sent in doc.sents])
+
+    for s in sentences:
+        print("---")
+        print(s)
+
+    new_segments = []
+    current_pos = 0
+    words = [w for s in result["segments"] for w in s.get("words", [])]
+
+    for sentence in sentences:
+        sentence_words = sentence.split()
+        n = len(sentence_words)
+
+        # 該当する単語を元のwordリストから探す
+        for i in range(current_pos, len(words) - n + 1):
+            if [w["word"].strip() for w in words[i:i+n]] == sentence_words:
+                start_time = words[i]["start"]
+                end_time = words[i+n-1]["end"]
+                new_segments.append({
+                    "start": start_time,
+                    "end": end_time,
+                    "text": sentence
+                })
+                current_pos = i + n
+                break
+
+    with open("/tmp/new-script.vtt", "w") as f:
+        f.write("WEBVTT\n\n")
+        for seg in new_segments:
+            # print(f"[{format_timestamp(seg['start'])} - {format_timestamp(seg['end'])}] {seg['text']}")
+            f.write(f"{format_timestamp(seg['start'])} --> {format_timestamp(seg['end'])}\n")
+            f.write(f"{seg['text']}\n\n")
