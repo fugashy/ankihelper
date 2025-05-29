@@ -29,6 +29,7 @@ def image(ctx):
 @click.option("--image-height", type=int, default=480)
 @click.option("--output-dir-path", "-o", type=str, default="/tmp")
 @click.option("--huggingface-token", type=str, default=os.environ.get("HUGGINGFACE_TOKEN"))
+@click.option("--safety", is_flag=True, default=False)
 @click.pass_context
 def from_text(
         ctx,
@@ -37,16 +38,24 @@ def from_text(
         image_width,
         image_height,
         output_dir_path,
-        huggingface_token):
+        huggingface_token,
+        safety):
     if huggingface_token is not None:
         ic("use hugging face token to use models")
         huggingface_hub.login(huggingface_token)
 
+    if safety:
+        create_pipe = lambda model, dtype: StableDiffusionPipeline.from_pretrained(
+                model, torch_dtype=dtype)
+    else:
+        create_pipe = lambda model, dtype: StableDiffusionPipeline.from_pretrained(
+                model, torch_dtype=dtype, safety_checker=None)
+
     try:
-        pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float32, safety_checker=None)
+        pipe = create_pipe(model, torch.float32)
         ic("use float32")
     except:
-        pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16, safety_checker=None)
+        pipe = create_pipe(model, torch.float16)
         ic("use float16")
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
