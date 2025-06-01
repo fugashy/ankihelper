@@ -19,7 +19,8 @@ pip install .
 
   ```bash
   ankihelper audio /path/to/audio to-script
-  ankihelper table from-audio-vtt-pair /path/to/audio /tmp/script/AUDIO_FILENAME.vtt
+  ankihelper text fix-whisper-result /tmp/script.json
+  ankihelper table from-audio-vtt-pair /path/to/audio /tmp/new-script.vtt
   ankihelper table add-trans /tmp/table.csv
   ankihelper deck from-table /tmp/table-with-trans.csv
   ```
