@@ -30,8 +30,8 @@ pip install .
   When using unit-by-unit audio data such as some learning materials for english.
 
   ```bash
-  ankihelper audio to-script /tmp/cliped/*.mp3
-  ankihelper table from-audio-vtt-pairs /tmp/cliped /tmp/script
+  ankihelper audio to-script /path/to/audio_dir/*.mp3
+  ankihelper table from-audio-vtt-pairs /path/to/audio_dir /tmp/script
   ankihelper table add-trans /tmp/table.csv
   ankihelper deck from-table /tmp/table-with-trans --output_filepath /tmp/YOUR.apkg
   ```
