@@ -19,24 +19,25 @@ def audio():
 
 
 @audio.command()
-@click.argument("audio_filepath", type=str)
+@click.argument("audio_filepaths", type=str, nargs=-1)
 @click.option("--output_dir", type=str, default="/tmp/cliped")
 @click.option("--min_silence_len", type=int, default=500)
 @click.option("--silence_thresh", type=int, default=-60)
-def clip_per_silence(audio_filepath, output_dir, min_silence_len, silence_thresh):
+def clip_per_silence(audio_filepaths, output_dir, min_silence_len, silence_thresh):
     os.makedirs(output_dir, exist_ok=True)
-    input_filename = audio_filepath.split("/")[-1].split(".")[0]
-    audio = AudioSegment.from_file(ctx.obj["audio_filepath"])
-    # 無音でない区間を取得（開始時間, 終了時間 のリスト）
-    nonsilent_chunks = detect_nonsilent(
-            audio,
-            min_silence_len=min_silence_len,
-            silence_thresh=silence_thresh)
+    for audio_filepath in audio_filepaths:
+        input_filename = audio_filepath.split("/")[-1].split(".")[0]
+        audio = AudioSegment.from_file(audio_filepath)
+        # 無音でない区間を取得（開始時間, 終了時間 のリスト）
+        nonsilent_chunks = detect_nonsilent(
+                audio,
+                min_silence_len=min_silence_len,
+                silence_thresh=silence_thresh)
 
-    for i, (start, end) in enumerate(nonsilent_chunks):
-        chunk = audio[start:end]
-        chunk.export(f"{output_dir}/{input_filename}_{i}.mp3", format="mp3")
-        print(f"Saved: {input_filename}_{i}.mp3 ({start}ms - {end}ms)")
+        for i, (start, end) in enumerate(nonsilent_chunks):
+            chunk = audio[start:end]
+            chunk.export(f"{output_dir}/{input_filename}_{i:04d}.mp3", format="mp3")
+            print(f"Saved: {input_filename}_{i:04d}.mp3 ({start}ms - {end}ms)")
 
 
 @audio.command()
