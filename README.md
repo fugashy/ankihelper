@@ -18,7 +18,7 @@ pip install .
   When using a audio file that contain long talks
 
   ```bash
-  ankihelper audio /path/to/audio to-script
+  ankihelper audio to-script /path/to/audio
   ankihelper text fix-whisper-result /tmp/script.json
   ankihelper table from-audio-vtt-pair /path/to/audio /tmp/new-script.vtt
   ankihelper table add-trans /tmp/table.csv
@@ -27,31 +27,13 @@ pip install .
 
 - Pattern B
 
-  When using unit-by-unit audio data such as that included in learning materials.
+  When using unit-by-unit audio data such as some learning materials for english.
 
   ```bash
-  # clip all audio data (the output path is /tmp/clip by default)
-  for f in /path/to/dir/contain/audio/data/*.mp3; do ankihelper audio "$f" clip-per-silence; done
-
-  # Move audio data for learning to another directory, etc.
-
-  # create scripts with each audio files
-  for f in /tmp/cliped/*.mp3; do ankihelper audio "$f" to-script; done
-
-  # create table from the audio clips and the scripts(the output path is /tmp/table.csv)
+  ankihelper audio to-script /tmp/cliped/*.mp3
   ankihelper table from-audio-vtt-pairs /tmp/cliped /tmp/script
-
-  # remove duplicated rows
-  ankihelper table drop-duplocates /tmp/table.csv
-
-  # add a column that contain translations
-  ankihelper table add-trans /tmp/table.csv-dropped.csv
-
-  # split table
-  ankihelper table split /tmp/table-with-trans.csv
-
-  # create decks
-  for f in /tmp/chunk_df/*.csv; do ankihelper deck from-table "$f" --output_filepath "$f".apkg; done
+  ankihelper table add-trans /tmp/table.csv
+  ankihelper deck from-table /tmp/table-with-trans --output_filepath /tmp/YOUR.apkg
   ```
 
 ### Create a deck from a table
