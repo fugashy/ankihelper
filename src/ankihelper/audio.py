@@ -6,6 +6,7 @@ from pydub.silence import detect_nonsilent
 import torch
 import whisper
 import json
+from tqdm import tqdm
 
 import click
 
@@ -25,7 +26,7 @@ def audio():
 @click.option("--silence_thresh", type=int, default=-60)
 def clip_per_silence(audio_filepaths, output_dir, min_silence_len, silence_thresh):
     os.makedirs(output_dir, exist_ok=True)
-    for audio_filepath in audio_filepaths:
+    for audio_filepath in tqdm(audio_filepaths):
         input_filename = audio_filepath.split("/")[-1].split(".")[0]
         audio = AudioSegment.from_file(audio_filepath)
         # 無音でない区間を取得（開始時間, 終了時間 のリスト）
@@ -46,7 +47,6 @@ def clip_per_silence(audio_filepaths, output_dir, min_silence_len, silence_thres
 @click.pass_context
 def to_script(ctx, audio_filepaths, output_dir):
     device = "mps" if torch.backends.mps.is_available() else "cpu"
-    ic(device)
     try:
         model = whisper.load_model("small").to(device)
         ic("Use MPS")
@@ -54,10 +54,11 @@ def to_script(ctx, audio_filepaths, output_dir):
         ic(e)
         model = whisper.load_model("small", device="cpu")
         ic("Use CPU")
-    for filepath in audio_filepaths:
+    for filepath in tqdm(audio_filepaths):
         result = model.transcribe(
                 filepath,
-                word_timestamps=True)
+                word_timestamps=True,
+                fp16=False)
         with open("/tmp/script.json", "w") as f:
             json.dump(result, f, indent=2)
 

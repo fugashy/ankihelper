@@ -82,8 +82,8 @@ def save_whisper_result_as_vtt(result, output_filepath):
                 et = None
                 tmp = list()
 
-    ic(len(sentenses))
-    ic(len(ranges))
+#   ic(len(sentenses))
+#   ic(len(ranges))
 
     with open(output_filepath, "w", encoding="utf-8") as vtt_file:
         vtt_file.write("WEBVTT\n\n")  # VTTのヘッダー
@@ -92,7 +92,7 @@ def save_whisper_result_as_vtt(result, output_filepath):
             vtt_file.write(f"{format_timestamp(range_[0])} --> {format_timestamp(range_[1])}\n")
             vtt_file.write(f"{"".join(sentence)}\n\n")
 
-    ic("done")
+#   ic("done")
 
 
 class ITranslator():
