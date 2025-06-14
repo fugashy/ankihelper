@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+from collections import defaultdict
 
 import click
 from icecream import ic
@@ -10,6 +11,7 @@ from PIL import Image
 import pytesseract
 from gtts import gTTS
 import spacy
+import numpy as np
 
 
 from .utils import (
@@ -172,3 +174,38 @@ def fix_whisper_result(input_filepath):
             # print(f"[{format_timestamp(seg['start'])} - {format_timestamp(seg['end'])}] {seg['text']}")
             f.write(f"{format_timestamp(seg['start'])} --> {format_timestamp(seg['end'])}\n")
             f.write(f"{seg['text']}\n\n")
+
+
+@text.command()
+@click.argument("input_filepath", type=str)
+@click.option("--output_filepath", type=str, default="/tmp/script-inspected.csv")
+def inspect_whisper_result(input_filepath, output_filepath):
+    ic(input_filepath)
+
+    with open(input_filepath, "r") as f:
+        result = json.load(f)
+
+    spec_by = defaultdict(list)
+    for seg in result["segments"]:
+        for word in seg["words"]:
+            w = word["word"].strip(" -.,!?\"").lower()
+            dt = word["end"] - word["start"]
+            spec_by[w].append(dt)
+
+    ic(spec_by)
+    out = list()
+    for word, dts in spec_by.items():
+        out.append({
+            "word": word,
+            "num": len(dts),
+            "dt_mean": np.mean(dts),
+            "dt_std": np.std(dts),
+            "dt_med": np.median(dts),
+            "dt_max": np.max(dts),
+            "dt_min": np.min(dts),
+            })
+
+    df = pd.DataFrame.from_dict(out)
+    df = df.sort_values("num", ascending=False)
+    df.to_csv(output_filepath, index=False)
+    ic(output_filepath)
