@@ -12,6 +12,8 @@ import pytesseract
 from gtts import gTTS
 import spacy
 import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 from .utils import (
@@ -206,6 +208,49 @@ def inspect_whisper_result(input_filepath, output_filepath):
             })
 
     df = pd.DataFrame.from_dict(out)
-    df = df.sort_values("num", ascending=False)
     df.to_csv(output_filepath, index=False)
     ic(output_filepath)
+
+
+@text.command()
+@click.argument("input_filepath", type=str)
+@click.option("--num-per-group", type=int, default=20)
+@click.option("--output_dir", type=str, default="/tmp")
+def show_word_frequency(input_filepath, num_per_group, output_dir):
+    ic(input_filepath)
+    df = pd.read_csv(input_filepath, header=0)
+    df = df.sort_values("num", ascending=True).reset_index(drop=True)
+
+    print(f'word num: {len(df["word"])}')
+
+    n = ic(len(df))
+    ic(num_per_group)
+    group_num = ic(int(n / float(num_per_group)))
+    ns = [0] + [num_per_group * (i+1) for i in range(group_num)]
+
+    remain_num = ic(int(n % float(num_per_group)))
+    if remain_num < num_per_group:
+        ns[-1] += remain_num
+    else:
+        ns += [remain_num]
+    ic(ns[0], ns[1], ns[-1])
+
+
+    top_n = int(0.3 * n)
+    mid_n = int(0.4 * n)
+
+    dfs = [
+            df.iloc[i:j]
+            for i, j in zip(ns, ns[1:])]
+
+    for i in tqdm(range(len(dfs))):
+        df = dfs[i]
+        plt.figure(figsize=(10, 6))
+        plt.barh(
+                df["word"],
+                df["num"])
+        plt.title(f"Word frequency")
+        plt.xlabel("Word")
+        plt.ylabel("Frequency[-]")
+        plt.savefig(f"{output_dir}/freq-{i:04d}.png")
+        plt.close()

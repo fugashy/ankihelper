@@ -204,6 +204,7 @@ def add_trans(input_table_filepath, output_table_filepath, client_type):
 @click.option("--output_table_filepath", type=str, default="/tmp/table-with-audio.csv")
 def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath):
     df = pd.read_csv(input_table_filepath, quotechar='"')
+    ic(df["en"])
     english_texts = df["en"]
 
     shutil.rmtree(output_audio_dirpath, ignore_errors=True)
