@@ -9,6 +9,9 @@ from tqdm import tqdm
 from googletrans import Translator
 from google.cloud import translate_v2 as GCloudTranslator
 
+import torch
+from diffusers import StableDiffusionPipeline
+
 
 def convert_vtt_time(vtt_time, offset=0):
     """VTTの時間フォーマット (hh:mm:ss.sss) を ffmpeg 用 (hh:mm:ss) に変換し、offset(秒)を加える"""
@@ -174,3 +177,51 @@ def clip_by_script(
 
     subprocess.run(["reset"])
     return sorted(results, key=lambda x: x["id"])
+
+
+class ImageGenerator():
+    @staticmethod
+    def get_diffuser_model_name_by_id():
+        models = [
+            "SG161222/Realistic_Vision_V5.1_noVAE",
+            "runwayml/stable-diffusion-v1-5",  # float32 リアル 濃い
+            "gsdf/Counterfeit-V2.5",  # float32 アニメ風 淡い
+            "Lykon/dreamshaper-7",  # float32 3Dアニメ風 濃い
+            "Meina/MeinaMix_V11",  # float32 アニメ風 よく検閲に引っかかる
+            ]
+        return { str(i): m for i, m in enumerate(models)}
+
+    def __init__(
+            self,
+            model_name,
+            safety=True):
+        if safety:
+            create_pipe = lambda model, dtype: StableDiffusionPipeline.from_pretrained(
+                    model, torch_dtype=dtype)
+        else:
+            create_pipe = lambda model, dtype: StableDiffusionPipeline.from_pretrained(
+                    model, torch_dtype=dtype, safety_checker=None)
+
+        try:
+            pipe = create_pipe(model_name, torch.float16)
+            ic("float 16")
+        except:
+            pipe = create_pipe(model_name, torch.float32)
+            ic("float 32")
+        ic(model_name)
+        device = "mps" if torch.backends.mps.is_available() else "cpu"
+        ic(device)
+        self.pipe = pipe.to(device)
+
+    def generate(
+            self,
+            prompt,
+            height,
+            width,
+            negative_prompt="ext, letters, words, watermark, negative"):
+        return self.pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                height=height,
+                width=width).images
+
