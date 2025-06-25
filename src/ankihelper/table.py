@@ -5,6 +5,7 @@ import shutil
 import json
 from glob import glob
 
+from tqdm import tqdm
 import click
 from icecream import ic
 import pandas as pd
@@ -211,7 +212,7 @@ def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath)
     os.makedirs(output_audio_dirpath, exist_ok=True)
 
     audio_paths = []
-    for i, text in enumerate(english_texts):
+    for i, text in tqdm(enumerate(english_texts), total=len(english_texts)):
         audio_filename = f"audio_{i+1}.mp3"
         audio_path = os.path.join(output_audio_dirpath, audio_filename)
 

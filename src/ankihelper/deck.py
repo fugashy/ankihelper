@@ -59,7 +59,7 @@ def from_table(input_filepaths, output_filepath, jp_major):
     deck = genanki.Deck(28282828, name)
     audio_filepaths = list()
     for df in dfs:
-        for row in df.itertuples():
+        for row in tqdm(df.itertuples(), total=len(df)):
             audio_filename = os.path.basename(row.en_audio)
             audio_filepaths.append(row.en_audio)
             note = genanki.Note(

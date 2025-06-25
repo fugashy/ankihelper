@@ -30,15 +30,18 @@ def text():
 
 @text.command()
 @click.argument("input_text", type=str)
-@click.option("--output_filename", type=str, default=None)
+@click.option("--output-dirpath", type=str, default="/tmp")
+@click.option("--output-filename", type=str, default=None)
 @click.option("--lang", "-l", type=click.Choice(["en", "jp"]), default="en")
-def to_audio(input_text, output_filename, lang):
+def to_audio(input_text, output_dirpath, output_filename, lang):
     ic(input_text)
 
     tts = gTTS(input_text, lang=lang)
     if output_filename is None:
         output_filename = input_text.lower().replace(" ", "-").strip("'\`\"\'.[]()!?/\\")
-    output_filepath = f"/tmp/{output_filename}.mp3"
+    output_filepath = os.path.join(
+            output_dirpath,
+            f"{output_filename}.mp3")
     tts.save(output_filepath)
     ic(output_filepath)
 
