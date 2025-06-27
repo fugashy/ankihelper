@@ -22,8 +22,7 @@ def deck():
 @deck.command()
 @click.argument("input_filepaths", type=str, nargs=-1)
 @click.option("--output_filepath", type=str, default="/tmp/table.apkg")
-@click.option("--jp_major", is_flag=True, default=False)
-def from_table(input_filepaths, output_filepath, jp_major):
+def from_table(input_filepaths, output_filepath):
     ic(input_filepaths)
     name = os.path.basename(output_filepath)
     dfs = [
