@@ -32,6 +32,27 @@ def table():
 
 
 @table.command()
+@click.argument("input_filepaths", type=str, nargs=-1)
+def from_text(input_filepaths):
+    ic(input_filepaths)
+    lines_raw = list()
+    for fp in input_filepaths:
+        with open(fp, "r") as f:
+            lines_raw += f.readlines()
+
+    lines = list()
+    for line_raw in lines_raw:
+        if len(lines_raw) == 0:
+            continue
+        for l in line_raw.split("."):
+            lines.append(l)
+
+    ic(lines)
+
+    ic(lines_raw)
+
+
+@table.command()
 @click.argument("table_filepath", type=str)
 @click.option("--rows-per-file", type=int, default=300)
 @click.option("--output_dirpath", type=str, default="/tmp/chunk_df")

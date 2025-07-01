@@ -30,22 +30,15 @@ def from_table(input_filepaths, output_filepath):
                 input_filepath, header=0, usecols=["en", "jp", "en_audio"])
             for input_filepath in input_filepaths]
 
-    if jp_major:
-        template = {
-                "name": "Listening Card",
-                "qfmt": '{{JP}}',
-                "afmt": '{{FrontSide}}<hr>{{Audio}}<br>{{EN}}<br>{{MEMO}}'
-            }
-    else:
-        template = {
-                "name": "Listening Card",
-                "qfmt": '{{Audio}}<br>What did they said?',
-                "afmt": '{{FrontSide}}<hr>{{EN}}<br>{{JP}}<br>{{MEMO}}'
-            }
+    template = {
+            "name": "Listening Card",
+            "qfmt": '{{Audio}}<br>What did they say?',
+            "afmt": '{{FrontSide}}<hr>{{EN}}<hr>{{JP}}<hr>{{MEMO}}'
+        }
 
     model = genanki.Model(
-        28282828,
-        f"{name} Model",
+        28282829,
+        f"{name}",
         fields=[
             {"name": "JP"},
             {"name": "EN"},
@@ -55,7 +48,7 @@ def from_table(input_filepaths, output_filepath):
         templates=[template]
     )
 
-    deck = genanki.Deck(28282828, name)
+    deck = genanki.Deck(28282829, name)
     audio_filepaths = list()
     for df in dfs:
         for row in tqdm(df.itertuples(), total=len(df)):
