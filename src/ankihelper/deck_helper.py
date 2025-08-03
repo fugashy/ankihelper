@@ -94,13 +94,13 @@ class ReadingQuestionDeckHelper(DeckHelper):
         super().__init__(input_filepaths, model_id)
 
     def _get_cols(self):
-        return ["q", "opt", "en", "exp", "en_audio"]
+        return ["q", "opt", "en", "jp", "exp", "en_audio"]
 
     def _generate_model(self):
         template = {
                 "name": "Reading Question Card",
                 "qfmt": '{{Q}}<hr>{{OPT}}',
-                "afmt": '{{FrontSide}}<hr>{{AUDIO}}<hr>{{EN}}<hr>{{EXP}}<hr>{{MEMO}}'
+                "afmt": '{{FrontSide}}<hr>{{AUDIO}}<hr>{{EN}}<hr>{{JP}}<hr>{{EXP}}<hr>{{MEMO}}'
             }
 
         return genanki.Model(
@@ -111,6 +111,7 @@ class ReadingQuestionDeckHelper(DeckHelper):
                     {"name": "OPT"},
                     {"name": "AUDIO"},
                     {"name": "EN"},
+                    {"name": "JP"},
                     {"name": "EXP"},
                     {"name": "MEMO"},
                     ],
@@ -125,5 +126,6 @@ class ReadingQuestionDeckHelper(DeckHelper):
                 row.opt,
                 audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
                 row.en,
+                row.jp,
                 row.exp,
                 ""])
