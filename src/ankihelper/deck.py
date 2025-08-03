@@ -13,6 +13,10 @@ from .utils import (
         convert_vtt_time,
         parse_vtt,
         )
+from .deck_helper import (
+        get_deck_helper_types,
+        create_deck_helper,
+        )
 
 @click.group()
 def deck():
@@ -22,53 +26,37 @@ def deck():
 @deck.command()
 @click.argument("input_filepaths", type=str, nargs=-1)
 @click.option("--output_filepath", type=str, default="/tmp/table.apkg")
-def from_table(input_filepaths, output_filepath):
+@click.option(
+        "--deck_type",
+        type=click.Choice(get_deck_helper_types()),
+        default=get_deck_helper_types()[0])
+@click.option("--model_id", type=int, default=12345678)
+def from_table(input_filepaths, output_filepath, deck_type, model_id):
     ic(input_filepaths)
-    name = os.path.basename(output_filepath)
-    dfs = [
-            pd.read_csv(
-                input_filepath, header=0, usecols=["en", "jp", "en_audio"])
-            for input_filepath in input_filepaths]
+    deck_helper = create_deck_helper(
+            deck_type,
+            input_filepaths,
+            model_id)
+    if deck_helper is None:
+        print(f"{deck_type} is not supported")
+        return
 
-    template = {
-            "name": "Listening Card",
-            "qfmt": '{{Audio}}<br>What did they say?',
-            "afmt": '{{FrontSide}}<hr>{{EN}}<hr>{{JP}}<hr>{{MEMO}}'
-        }
-
-    model = genanki.Model(
-        28282829,
-        f"{name}",
-        fields=[
-            {"name": "JP"},
-            {"name": "EN"},
-            {"name": "Audio"},
-            {"name": "MEMO"},
-            ],
-        templates=[template]
-    )
-
-    deck = genanki.Deck(28282829, name)
-    audio_filepaths = list()
-    for df in dfs:
-        for row in tqdm(df.itertuples(), total=len(df)):
-            audio_filename = os.path.basename(row.en_audio)
-            audio_filepaths.append(row.en_audio)
-            note = genanki.Note(
-                model=model,
-                fields=[
-                    row.jp,
-                    row.en,
-                    audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
-                    ""]
-            )
-            deck.add_note(note)
+    deck = genanki.Deck(
+            model_id,
+            os.path.basename(output_filepath))
+    media_filepaths = list()
+    while (True):
+        media_file, note = deck_helper.generate_note()
+        if media_file is None or note is None:
+            break
+        deck.add_note(note)
+        media_filepaths.append(media_file)
 
     package = genanki.Package(
         deck,
-        media_files=audio_filepaths,
-    )
+        media_files=media_filepaths)
     package.write_to_file(f"{output_filepath}")
+    ic(output_filepath)
 
 
 @deck.command()

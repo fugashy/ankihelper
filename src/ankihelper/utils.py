@@ -4,6 +4,7 @@ import re
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import pandas as pd
 from icecream import ic
 from tqdm import tqdm
 from googletrans import Translator
@@ -224,4 +225,3 @@ class ImageGenerator():
                 negative_prompt=negative_prompt,
                 height=height,
                 width=width).images
-
