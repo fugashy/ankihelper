@@ -32,7 +32,7 @@ def deck():
         default=get_deck_helper_types()[0])
 @click.option("--model_id", type=int, default=12345678)
 def from_table(input_filepaths, output_filepath, deck_type, model_id):
-    ic(input_filepaths)
+    ic(input_filepaths, deck_type, model_id)
     deck_helper = create_deck_helper(
             deck_type,
             input_filepaths,
