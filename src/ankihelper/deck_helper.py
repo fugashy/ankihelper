@@ -39,10 +39,8 @@ class DeckHelper():
         raise NotImplementedError
 
     def generate_note(self):
-
         try:
             row = next(self._gen)
-            print(row)
         except StopIteration:
             return None, None
 
@@ -79,6 +77,8 @@ class ListeningDeckHelper(DeckHelper):
                 templates=[template])
 
     def _generate_note(self, row):
+        if row.jp == "Error":
+            raise Exception("An error in row.jp")
         audio_filename = os.path.basename(row.en_audio)
         return row.en_audio, genanki.Note(
             model=self._generate_model(),

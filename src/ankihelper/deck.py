@@ -46,7 +46,10 @@ def from_table(input_filepaths, output_filepath, deck_type, model_id):
             os.path.basename(output_filepath))
     media_filepaths = list()
     while (True):
-        media_file, note = deck_helper.generate_note()
+        try:
+            media_file, note = deck_helper.generate_note()
+        except Exception:
+            continue
         if media_file is None or note is None:
             break
         deck.add_note(note)
