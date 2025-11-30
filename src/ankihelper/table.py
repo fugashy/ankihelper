@@ -190,16 +190,24 @@ def add_image(
         type=click.Choice(
             ["google-trans", "gcloud"]),
         default="google-trans")
-def add_trans(input_table_filepath, output_table_filepath, client_type):
+@click.option("--src-lang", type=click.Choice(["en", "jp"]), default="en")
+def add_trans(input_table_filepath, output_table_filepath, client_type, src_lang):
     df = pd.read_csv(input_table_filepath, header=0)
 
     translator = create_translator(client_type)
+
+    if src_lang == "en":
+        src = "en"
+        dest = "jp"
+    else:
+        src = "jp"
+        dest = "en"
 
     def translate_text(text, retries=3):
         print(f"try to translate: {text}")
         for attempt in range(retries):
             try:
-                translation = translator.translate(text=text, src="en", dest="ja")
+                translation = translator.translate(text=text, src=src, dest=src)
                 if client_type != "gcloud":
                     time.sleep(random.uniform(1, 3))  # 1〜3秒のランダムな遅延
                 return translation
@@ -208,7 +216,7 @@ def add_trans(input_table_filepath, output_table_filepath, client_type):
                 time.sleep(5)  # 5秒待機してリトライ
         return "Error"
 
-    df["jp"] = df["en"].apply(lambda x: translate_text(x))
+    df[dest] = df[src].apply(lambda x: translate_text(x))
     df.to_csv(output_table_filepath, index=False)
 
 
