@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "A python package attempt to help you to create a Deck in term of Anki"
 authors = [
   {name = "fugashy", email = "fugashy@icloud.com"}]
-requires-python = "==3.10.*"
+requires-python = "==3.12.*"
 dependencies = [
   "accelerate",
   "click",
@@ -22,9 +22,9 @@ dependencies = [
   "scikit-learn",
   "scipy",
   "sentence-transformers",
-  "torch==2.6.0",
-  "torchaudio==2.6.0",
-  "torchvision==0.21.0",
+  "torch",
+  "torchaudio",
+  "torchvision",
   "tqdm",
   "transformers",
 # "whisper==1.1.10",
@@ -39,7 +39,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pdm]
-python-version = 3.10
+python-version = 3.12
 
 [project.scripts]
 ankihelper = "ankihelper.cli:main"
