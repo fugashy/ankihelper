@@ -16,6 +16,8 @@ def create_deck_helper(type_, input_filepaths, model_id):
         return ListeningDeckHelper(input_filepaths, model_id)
     elif type_ == "reading_question":
         return ReadingQuestionDeckHelper(input_filepaths, model_id)
+    elif type_ == "writing":
+        return WritingDeckHelper(input_filepaths, model_id)
 
 
 class DeckHelper():
@@ -56,7 +58,7 @@ class ListeningDeckHelper(DeckHelper):
         super().__init__(input_filepaths, model_id)
 
     def _get_cols(self):
-        return ["en", "jp", "en_audio"]
+        return ["en", "ja", "en_audio"]
 
     def _generate_model(self):
         template = {
@@ -77,13 +79,13 @@ class ListeningDeckHelper(DeckHelper):
                 templates=[template])
 
     def _generate_note(self, row):
-        if row.jp == "Error":
-            raise Exception("An error in row.jp")
+        if row.ja == "Error":
+            raise Exception("An error in row.ja")
         audio_filename = os.path.basename(row.en_audio)
         return row.en_audio, genanki.Note(
             model=self._generate_model(),
             fields=[
-                row.jp,
+                row.ja,
                 row.en,
                 audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
                 ""])
@@ -94,7 +96,7 @@ class ReadingQuestionDeckHelper(DeckHelper):
         super().__init__(input_filepaths, model_id)
 
     def _get_cols(self):
-        return ["q", "opt", "en", "jp", "exp", "en_audio"]
+        return ["q", "opt", "en", "ja", "exp", "en_audio"]
 
     def _generate_model(self):
         template = {
@@ -126,7 +128,7 @@ class ReadingQuestionDeckHelper(DeckHelper):
                 row.opt,
                 audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
                 row.en,
-                row.jp,
+                row.ja,
                 row.exp,
                 ""])
 
@@ -136,12 +138,12 @@ class WritingDeckHelper(DeckHelper):
         super().__init__(input_filepaths, model_id)
 
     def _get_cols(self):
-        return ["en", "jp", "en_audio"]
+        return ["en", "ja", "en_audio"]
 
     def _generate_model(self):
         template = {
                 "name": "How shuoud I put it...?",
-                "qfmt": '{{JP}}',
+                "qfmt": 'How shuoud I put it...?<hr>{{JP}}',
                 "afmt": '{{FrontSide}}<hr>{{AUDIO}}<hr>{{EN}}<hr>{{MEMO}}'
             }
 
@@ -161,7 +163,7 @@ class WritingDeckHelper(DeckHelper):
         return row.en_audio, genanki.Note(
             model=self._generate_model(),
             fields=[
-                row.jp,
+                row.ja,
                 audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
                 row.en,
                 ""])
