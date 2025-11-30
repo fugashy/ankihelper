@@ -94,7 +94,7 @@ def save_whisper_result_as_vtt(result, output_filepath):
 
         for sentence, range_ in zip(sentenses, ranges):
             vtt_file.write(f"{format_timestamp(range_[0])} --> {format_timestamp(range_[1])}\n")
-            vtt_file.write(f"{"".join(sentence)}\n\n")
+            vtt_file.write(f'{"".join(sentence)}\n\n')
 
 #   ic("done")
 

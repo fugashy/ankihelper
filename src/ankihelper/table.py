@@ -198,22 +198,26 @@ def add_trans(input_table_filepath, output_table_filepath, client_type, src_lang
 
     if src_lang == "en":
         src = "en"
-        dest = "jp"
+        dest = "ja"
     else:
-        src = "jp"
+        src = "ja"
         dest = "en"
 
     def translate_text(text, retries=3):
         print(f"try to translate: {text}")
         for attempt in range(retries):
+            if text == "":
+                return ""
             try:
-                translation = translator.translate(text=text, src=src, dest=src)
+                translation = translator.translate(text=text, src=src, dest=dest)
                 if client_type != "gcloud":
                     time.sleep(random.uniform(1, 3))  # 1〜3秒のランダムな遅延
+                print(translation)
                 return translation
             except Exception as e:
-                print(f"{e}")
-                time.sleep(5)  # 5秒待機してリトライ
+                return ""
+               #print(f"{e}")
+               #time.sleep(5)  # 5秒待機してリトライ
         return "Error"
 
     df[dest] = df[src].apply(lambda x: translate_text(x))

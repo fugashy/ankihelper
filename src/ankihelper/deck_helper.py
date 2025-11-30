@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def get_deck_helper_types():
-    return ["listening", "reading_question"]
+    return ["listening", "reading_question", "writing"]
 
 
 def create_deck_helper(type_, input_filepaths, model_id):
@@ -128,4 +128,40 @@ class ReadingQuestionDeckHelper(DeckHelper):
                 row.en,
                 row.jp,
                 row.exp,
+                ""])
+
+
+class WritingDeckHelper(DeckHelper):
+    def __init__(self, input_filepaths, model_id):
+        super().__init__(input_filepaths, model_id)
+
+    def _get_cols(self):
+        return ["en", "jp", "en_audio"]
+
+    def _generate_model(self):
+        template = {
+                "name": "How shuoud I put it...?",
+                "qfmt": '{{JP}}',
+                "afmt": '{{FrontSide}}<hr>{{AUDIO}}<hr>{{EN}}<hr>{{MEMO}}'
+            }
+
+        return genanki.Model(
+                self.model_id,
+                template["name"],
+                fields=[
+                    {"name": "JP"},
+                    {"name": "AUDIO"},
+                    {"name": "EN"},
+                    {"name": "MEMO"},
+                    ],
+                templates=[template])
+
+    def _generate_note(self, row):
+        audio_filename = os.path.basename(row.en_audio)
+        return row.en_audio, genanki.Note(
+            model=self._generate_model(),
+            fields=[
+                row.jp,
+                audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
+                row.en,
                 ""])
