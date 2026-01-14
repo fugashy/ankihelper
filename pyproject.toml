@@ -32,6 +32,7 @@ dependencies = [
   "yt_dlp",
   "pdfplumber",
   "pytesseract",
+  "pip",
   ]
 
 [build-system]

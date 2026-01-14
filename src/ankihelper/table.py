@@ -17,6 +17,7 @@ from sklearn.metrics import silhouette_score
 from sentence_transformers import SentenceTransformer
 from scipy.cluster.hierarchy import linkage, fcluster
 from gtts import gTTS
+import spacy
 
 from .utils import (
         extract_english_from_vtt,
@@ -303,3 +304,19 @@ def add_categories(
     df.to_csv(output_table_filepath_csv, index=False)
 
 
+@table.command()
+@click.argument("input_filepath", type=str)
+@click.option("--output_table_filepath", type=str, default="/tmp/table-aligned.csv")
+def alignment(input_filepath, output_table_filepath):
+    spacy.cli.download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
+    df_in = pd.read_csv(input_filepath, names=["stamp", "en"])
+    print(df_in)
+
+    dict_out = []
+    for row in df_in.itertuples():
+        doc = nlp(row.en)
+        for sent in doc.sents:
+            dict_out.append({"en": sent})
+    df_out = pd.DataFrame.from_dict(dict_out)
+    df_out.to_csv(output_table_filepath)
