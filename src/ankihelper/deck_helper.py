@@ -5,7 +5,11 @@ import pandas as pd
 
 
 def get_deck_helper_types():
-    return ["listening", "reading_question", "writing"]
+    return [
+            "listening",
+            "listening_without_jp",
+            "reading_question",
+            "writing"]
 
 
 def create_deck_helper(type_, input_filepaths, model_id):
@@ -14,6 +18,8 @@ def create_deck_helper(type_, input_filepaths, model_id):
 
     if type_ == "listening":
         return ListeningDeckHelper(input_filepaths, model_id)
+    if type_ == "listening_without_jp":
+        return ListeningWithoutJpDeckHelper(input_filepaths, model_id)
     elif type_ == "reading_question":
         return ReadingQuestionDeckHelper(input_filepaths, model_id)
     elif type_ == "writing":
@@ -86,6 +92,40 @@ class ListeningDeckHelper(DeckHelper):
             model=self._generate_model(),
             fields=[
                 row.ja,
+                row.en,
+                audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
+                ""])
+
+
+class ListeningWithoutJpDeckHelper(DeckHelper):
+    def __init__(self, input_filepaths, model_id):
+        super().__init__(input_filepaths, model_id)
+
+    def _get_cols(self):
+        return ["en", "en_audio"]
+
+    def _generate_model(self):
+        template = {
+                "name": "Listening Without Jp Card",
+                "qfmt": '{{Audio}}<br>What did they say?',
+                "afmt": '{{FrontSide}}<hr>{{EN}}<hr>{{MEMO}}'
+            }
+
+        return genanki.Model(
+                self.model_id,
+                template["name"],
+                fields=[
+                    {"name": "EN"},
+                    {"name": "Audio"},
+                    {"name": "MEMO"},
+                    ],
+                templates=[template])
+
+    def _generate_note(self, row):
+        audio_filename = os.path.basename(row.en_audio)
+        return row.en_audio, genanki.Note(
+            model=self._generate_model(),
+            fields=[
                 row.en,
                 audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
                 ""])
