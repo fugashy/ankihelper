@@ -19,6 +19,109 @@ def audio():
     pass
 
 
+def normalize_audio(
+    audio: AudioSegment,
+    target_dbfs: float = -18.0,
+) -> AudioSegment:
+    """
+    音量正規化
+    """
+
+    if audio.dBFS == float("-inf"):
+        return audio
+
+    change_in_dbfs = target_dbfs - audio.dBFS
+    return audio.apply_gain(change_in_dbfs)
+
+def trim_edges(
+    audio: AudioSegment,
+    silence_thresh: int = -42,
+    min_silence_len: int = 100,
+    keep_edge_silence_ms: int = 30,
+) -> AudioSegment:
+    """
+    文頭・文末の無音除去
+    """
+    nonsilent = detect_nonsilent(
+        audio,
+        min_silence_len=min_silence_len,
+        silence_thresh=silence_thresh,
+    )
+
+    if not nonsilent:
+        return audio
+
+    start = max(
+        0,
+        nonsilent[0][0] - keep_edge_silence_ms,
+    )
+
+    end = min(
+        len(audio),
+        nonsilent[-1][1] + keep_edge_silence_ms,
+    )
+
+    return audio[start:end]
+
+
+def compress_silence(
+    audio: AudioSegment,
+    silence_thresh: int = -42,
+    detect_silence_len: int = 150,
+    long_silence_ms: int = 700,
+    target_silence_ms: int = 120,
+) -> AudioSegment:
+    """
+    長すぎる無音だけ圧縮
+    """
+
+    nonsilent_ranges = detect_nonsilent(
+        audio,
+        min_silence_len=detect_silence_len,
+        silence_thresh=silence_thresh,
+    )
+
+    if not nonsilent_ranges:
+        return audio
+
+    output = AudioSegment.empty()
+    prev_end = 0
+
+    for start, end in nonsilent_ranges:
+        silence_duration = start - prev_end
+        # 長い無音だけ圧縮
+        if silence_duration > long_silence_ms:
+            silence = AudioSegment.silent(
+                duration=target_silence_ms
+            )
+
+        else:
+            # 短いpauseは保持
+            silence = AudioSegment.silent(
+                duration=max(0, silence_duration)
+            )
+
+        chunk = audio[start:end]
+        output += silence + chunk
+        prev_end = end
+
+    return output
+
+
+@audio.command()
+@click.argument("audio_filepaths", type=str, nargs=-1)
+@click.option("--output_dir", type=str, default="/tmp/audio")
+def filter_silence(audio_filepaths, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+    for audio_filepath in tqdm(audio_filepaths):
+        a = AudioSegment.from_file(audio_filepath)
+        a = trim_edges(a)
+        a = compress_silence(a)
+        a = normalize_audio(a)
+        input_filename = audio_filepath.split("/")[-1].split(".")[0]
+        a.export(f"{output_dir}/{input_filename}.mp3", format="mp3")
+
+
 @audio.command()
 @click.argument("audio_filepaths", type=str, nargs=-1)
 @click.option("--output_dir", type=str, default="/tmp/cliped")

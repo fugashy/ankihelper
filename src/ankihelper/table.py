@@ -239,7 +239,7 @@ def add_audio(input_table_filepath, output_audio_dirpath, output_table_filepath)
 
     audio_paths = []
     for i, text in tqdm(enumerate(english_texts), total=len(english_texts)):
-        audio_filename = f"audio_{i+1}.mp3"
+        audio_filename = f"audio_{i:04d}.mp3"
         audio_path = os.path.join(output_audio_dirpath, audio_filename)
 
         tts = gTTS(text, lang='en')
