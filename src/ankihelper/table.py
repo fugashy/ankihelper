@@ -3,6 +3,7 @@ import time
 import random
 import shutil
 import json
+import subprocess
 from glob import glob
 
 from tqdm import tqdm
@@ -320,3 +321,30 @@ def alignment(input_filepath, output_table_filepath):
             dict_out.append({"en": sent})
     df_out = pd.DataFrame.from_dict(dict_out)
     df_out.to_csv(output_table_filepath)
+
+
+@table.command()
+@click.argument("input_filepath", type=str)
+@click.option("--output_dir_path", type=str, default="/tmp/numbers")
+def from_numbers(input_filepath, output_dir_path):
+    os.makedirs(output_dir_path, exist_ok=True)
+    applescript = f'''
+    tell application "Numbers"
+        open POSIX file "{input_filepath}"
+
+        tell front document
+            export to POSIX file "{output_dir_path}" as CSV
+        end tell
+
+        close front document saving no
+    end tell
+    '''
+
+    result = subprocess.run(
+        ["osascript", "-e", applescript],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr)
