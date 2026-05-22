@@ -1,6 +1,8 @@
 # ankihelper
 
-Command tool to support deck creation for learning application anki.
+A command-line tool for the learning application, Anki.
+
+It is specialized for learning English.
 
 ## How to install
 
@@ -11,7 +13,7 @@ pip install .
 
 ## How to use
 
-### Create a deck from a voice data
+### How to create listening cards from your English audio data.
 
 - Pattern A
 
@@ -36,7 +38,7 @@ pip install .
   ankihelper deck from-table /tmp/table-with-trans --output_filepath /tmp/YOUR.apkg
   ```
 
-### Create a deck from a table
+### How to create listening cards from your spreadsheet data.
 
 - Pattern A
 
@@ -60,8 +62,6 @@ pip install .
   ankihelper deck from-table /tmp/table-with-audio.csv
   ```
 
-### Create a deck from your English diary
+## License
 
-```bash
-T.B.D
-```
+MIT License
