@@ -69,7 +69,7 @@ def compress_silence(
     silence_thresh: int = -42,
     detect_silence_len: int = 150,
     long_silence_ms: int = 700,
-    target_silence_ms: int = 120,
+    target_silence_ms: int = 70,
 ) -> AudioSegment:
     """
     長すぎる無音だけ圧縮
