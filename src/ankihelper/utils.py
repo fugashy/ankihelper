@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import os
 import re
 import subprocess
+import html
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
@@ -125,7 +126,7 @@ class GoogleCloudTranslator(ITranslator):
                 text,
                 source_language=src,
                 target_language=dest)
-        return result["translatedText"]
+        return html.unescape(result["translatedText"])
 
 
 def create_translator(type_: str):
