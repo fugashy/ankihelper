@@ -50,14 +50,21 @@ def from_table(input_filepaths, output_filepath, deck_type, model_id):
             media_file, note = deck_helper.generate_note()
         except Exception:
             continue
-        if media_file is None or note is None:
+
+        if note is None:
             break
         deck.add_note(note)
+
+        if media_file is None:
+            continue
         media_filepaths.append(media_file)
 
-    package = genanki.Package(
-        deck,
-        media_files=media_filepaths)
+    if len(media_filepaths) == 0:
+        package = genanki.Package(deck)
+    else:
+        package = genanki.Package(
+            deck,
+            media_files=media_filepaths)
     package.write_to_file(f"{output_filepath}")
     ic(output_filepath)
 

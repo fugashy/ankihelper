@@ -9,7 +9,8 @@ def get_deck_helper_types():
             "listening",
             "listening_without_jp",
             "reading_question",
-            "writing"]
+            "writing",
+            "simple_anki"]
 
 
 def create_deck_helper(type_, input_filepaths, model_id):
@@ -24,6 +25,8 @@ def create_deck_helper(type_, input_filepaths, model_id):
         return ReadingQuestionDeckHelper(input_filepaths, model_id)
     elif type_ == "writing":
         return WritingDeckHelper(input_filepaths, model_id)
+    elif type_ == "simple_anki":
+        return SimpleAnkiDeckHelper(input_filepaths, model_id)
 
 
 class DeckHelper():
@@ -206,4 +209,37 @@ class WritingDeckHelper(DeckHelper):
                 row.ja,
                 audio_filename.replace(audio_filename, f"[sound:{audio_filename}]"),
                 row.en,
+                ""])
+
+
+class SimpleAnkiDeckHelper(DeckHelper):
+    def __init__(self, input_filepaths, model_id):
+        super().__init__(input_filepaths, model_id)
+
+    def _get_cols(self):
+        return ["word", "description"]
+
+    def _generate_model(self):
+        template = {
+                "name": "Answer it.",
+                "qfmt": '<hr>{{WORD}}',
+                "afmt": '{{FrontSide}}<hr>{{DESC}}<hr>{{MEMO}}'
+            }
+
+        return genanki.Model(
+                self.model_id,
+                template["name"],
+                fields=[
+                    {"name": "WORD"},
+                    {"name": "DESC"},
+                    {"name": "MEMO"},
+                    ],
+                templates=[template])
+
+    def _generate_note(self, row):
+        return None, genanki.Note(
+            model=self._generate_model(),
+            fields=[
+                str(row.word),
+                str(row.description),
                 ""])
