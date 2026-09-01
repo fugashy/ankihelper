@@ -10,6 +10,7 @@ def get_deck_helper_types():
             "listening_without_jp",
             "reading_question",
             "writing",
+            "reading",
             "simple_anki"]
 
 
@@ -25,6 +26,8 @@ def create_deck_helper(type_, input_filepaths, model_id):
         return ReadingQuestionDeckHelper(input_filepaths, model_id)
     elif type_ == "writing":
         return WritingDeckHelper(input_filepaths, model_id)
+    elif type_ == "reading":
+        return ReadingDeckHelper(input_filepaths, model_id)
     elif type_ == "simple_anki":
         return SimpleAnkiDeckHelper(input_filepaths, model_id)
 
@@ -242,4 +245,37 @@ class SimpleAnkiDeckHelper(DeckHelper):
             fields=[
                 str(row.word),
                 str(row.description),
+                ""])
+
+
+class ReadingDeckHelper(DeckHelper):
+    def __init__(self, input_filepaths, model_id):
+        super().__init__(input_filepaths, model_id)
+
+    def _get_cols(self):
+        return ["en", "ja"]
+
+    def _generate_model(self):
+        template = {
+                "name": "Read it.",
+                "qfmt": "<hr>{{EN}}",
+                "afmt": '{{FrontSide}}<hr>{{JP}}<hr>{{MEMO}}'
+            }
+
+        return genanki.Model(
+                self.model_id,
+                template["name"],
+                fields=[
+                    {"name": "EN"},
+                    {"name": "JP"},
+                    {"name": "MEMO"},
+                    ],
+                templates=[template])
+
+    def _generate_note(self, row):
+        return None, genanki.Note(
+            model=self._generate_model(),
+            fields=[
+                str(row.en),
+                str(row.ja),
                 ""])
